@@ -1,0 +1,49 @@
+message ProtoTrack {
+    required fixed32 id =1;
+    optional string name=2;
+
+    enum ProtoTrackType {
+        AIS =0;
+        ADSB =1;
+    }
+
+    optional ProtoTrackType type=3;
+
+    message TrackPoint {
+         required double t_epoch_sec=1;
+         required fixed32 lat_udeg=2;
+         required fixed32 lon_udeg=3;
+         required float speed_ms=4;
+         required float course_deg=5;
+         optional float height_m=6;
+         optional float vertvel_ms=7;
+         optional int32 aisstatus=8;
+         optional int32 trueheading_deg=9;
+         optional int32 seconds_utc=10;
+    }
+
+    repeated TrackPoint path=4;
+
+    message AisDestination {
+        required double t_epoch_sec=1;
+        required string dest=2;
+    }
+
+    message AisInfo {
+        optional int32 vesseltype=1;
+        optional string callsign=2;
+        optional fixed32 imo=3;
+        optional int32 a_m=4;
+        optional int32 b_m=5;
+        optional int32 c_m=6;
+        optional int32 d_m=7;
+        optional float draught_m=8;
+        optional bool badheading=9;
+        repeated AisDestination destlist=10;
+    }
+
+    optional AisInfo aisinfo=5;
+    optional double tInit_epoch_sec=6;
+    optional string src=7;
+}
+
