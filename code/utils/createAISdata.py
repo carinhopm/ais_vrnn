@@ -7,7 +7,8 @@ import pickle
 import pandas as pd
 import numpy as np
 
-from utils import protobufDecoder
+#from utils import protobufDecoder
+from utils import dataset_utils
 from Config import config
  
 def FindMMSIs():   ##Your implementation of step 1
@@ -18,11 +19,19 @@ def FindMMSIs():   ##Your implementation of step 1
         data = ReadJSONfile #Read the JSON file
 
         #Make a DataFrame with columns timestamp, lat, lon, speed, course
-        df =
+        df = pd.DataFrame(columns=['timestamp','lat','lon','speed','course'])
         
         #Fill df with the information from the JSON path information (data['Path'])
+        for msg in data['Path']:
+            df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],'speed': msg[3],'course': msg[4]}, ignore_index=True)
         
         #For each row in df determine the applicable Navigation Status. and add this new column, navstatus, to df
+        df['navstatus'] = 'other'
+        statusIdx = 0
+        for index, row in df.iterrows():
+            if statusIdx+1 < len(data['statushist']) and row['timestamp'] >= data['statushist'][statusIdx+1]:
+                statusIdx += 1
+            row['navstatus'] = convertNavStatusToId(data['statushist'][statusIdx])
         
         #Filter for all params x = x[x[:,LAT]>=LAT_MIN] ect.
         lat_min, lat_max, lon_min, lon_max = ROI
@@ -39,7 +48,7 @@ def FindMMSIs():   ##Your implementation of step 1
             ]
 
         #If rows left in dataframe and shiptype isin Shiptypes 
-        if len(df.index) > 0 && data["shiptype"] isin shiptypes:
+        if len(df.index) > 0 and data["shiptype"] is in shiptypes:
             new_row = {'MMSI': data["mmsi"],
                        'File': PathToTheJSONFile
                       } #Allocate new row for dataframe mmsis

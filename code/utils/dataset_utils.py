@@ -121,6 +121,23 @@ def classNames():
     
     return np.array(names), len(names)
 
+def convertNavStatusToId(navStatus):
+    
+    choices = {
+        'under way using engine': '0',
+        'at anchor': '1',
+        'not under command': '2',
+        'restricted maneuverability': '3',
+        'constrained by her draught': '4',
+        'moored': '5',
+        'aground ': '6',
+        'engaged in fishing': '7',
+        'under way sailing': '8',
+        'undefined': 'other'
+    }
+    
+    return choices.get(navStatus, 'other')
+
 class AISDataset(torch.utils.data.Dataset):
     def __init__(self, infoPath, train_mean = None):
         self.Infopath = infoPath
