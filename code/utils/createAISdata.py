@@ -17,8 +17,8 @@ def FindMMSIs():   ##Your implementation of step 1
     
     mmsis = pd.DataFrame(columns=['MMSI','File']) #Allocate dataframe
     
-    ##directory = r"..\..\..\Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
-    directory = r"C:\\Users\\carlo\\workspace\\special_course\\data\\test\\"
+    directory = r"C:\Users\asm\OneDrive - Netcompany\University\Master Thesis\Codebase\Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
+    #directory = r"C:\\Users\\carlo\\workspace\\special_course\\data\\test\\"
         
     for file in progressbar.progressbar(os.listdir(directory)):  #For each JSON file
     
@@ -30,8 +30,13 @@ def FindMMSIs():   ##Your implementation of step 1
         #Make a DataFrame with columns timestamp, lat, lon, speed, course
         df = pd.DataFrame(columns=['timestamp','lat','lon','speed','course'])
         
+                
         #Fill df with the information from the JSON path information (data['Path'])
-        for msg in data[0]['path']:
+        
+        for i in range(len(data['path'])):
+            
+            msg = data['path'][i]
+        #for msg in data[0]['path'][0]:
             df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],'speed': msg[3],'course': msg[4]}, ignore_index=True)
         
         #For each row in df determine the applicable Navigation Status. and add this new column, navstatus, to df
@@ -129,7 +134,7 @@ def ReadJSONfile(file):
         ##
         data = json.load(f)
         
-        return data
+        return data[0]
 
 def FilterDataFrame(df, ROI, maxSpeed, timePeriod):
     lat_min, lat_max, lon_min, lon_max = ROI
