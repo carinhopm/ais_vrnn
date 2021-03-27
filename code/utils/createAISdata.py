@@ -9,7 +9,7 @@ import numpy as np
 import os
 
 #from utils import protobufDecoder
-from utils import dataset_utils
+from dataset_utils import dataset_utils
 from Config import config
  
 def FindMMSIs():   ##Your implementation of step 1
@@ -27,7 +27,7 @@ def FindMMSIs():   ##Your implementation of step 1
         df = pd.DataFrame(columns=['timestamp','lat','lon','speed','course'])
         
         #Fill df with the information from the JSON path information (data['Path'])
-        for msg in data['Path']:
+        for msg in data['Path'][0]:
             df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],'speed': msg[3],'course': msg[4]}, ignore_index=True)
         
         #For each row in df determine the applicable Navigation Status. and add this new column, navstatus, to df
@@ -53,7 +53,7 @@ def FindMMSIs():   ##Your implementation of step 1
             ]
 
         #If rows left in dataframe and shiptype isin Shiptypes 
-        if len(df.index) > 0 and data["shiptype"] is in shiptypes:
+        if len(df.index) > 0 and data["shiptype"].isin(shiptypes):
             new_row = {'MMSI': data["mmsi"],
                        'File': PathToTheJSONFile
                       } #Allocate new row for dataframe mmsis
