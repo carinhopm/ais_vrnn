@@ -26,12 +26,12 @@ def FindMMSIs():   ##Your implementation of step 1
             df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],'speed': msg[3],'course': msg[4]}, ignore_index=True)
         
         #For each row in df determine the applicable Navigation Status. and add this new column, navstatus, to df
-        df['navstatus'] = 'other'
+        df['navstatus'] = 'other' # default value for the column
         statusIdx = 0
         for index, row in df.iterrows():
             if statusIdx+1 < len(data['statushist']) and row['timestamp'] >= data['statushist'][statusIdx+1]:
-                statusIdx += 1
-            row['navstatus'] = convertNavStatusToId(data['statushist'][statusIdx])
+                statusIdx += 1 # updates to new navigation status
+            row['navstatus'] = convertNavStatusToId(data['statushist'][statusIdx]) # last known nav. status
         
         #Filter for all params x = x[x[:,LAT]>=LAT_MIN] ect.
         lat_min, lat_max, lon_min, lon_max = ROI
