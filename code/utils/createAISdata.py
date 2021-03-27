@@ -6,6 +6,7 @@ import progressbar
 import pickle
 import pandas as pd
 import numpy as np
+import os
 
 from utils import protobufDecoder
 from Config import config
@@ -13,9 +14,13 @@ from Config import config
 def FindMMSIs():   ##Your implementation of step 1
     
     mmsis = pd.DataFrame(columns=['MMSI','File']) #Allocate dataframe
+    
+    directory = r"..Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
         
-    for file in progressbar.progressbar():  #For each JSON file
-        data = ReadJSONfile #Read the JSON file
+    for file in progressbar.progressbar(os.listdir(directory)):  #For each JSON file
+    
+    
+        data = ReadJSONfile(file) #Read the JSON file
 
         #Make a DataFrame with columns timestamp, lat, lon, speed, course
         df =
@@ -67,6 +72,21 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
     df.sort_values(['timestamp'], inplace=True)
     
     return df, stype
+
+
+def ReadJSONfile(file):
+        
+    if filename.endswith(".json"):
+        
+        try:
+            
+            f = pd.read_json(file)
+            return f
+            
+        except:
+            
+            print("File is not accessible")
+
 
 def FilterDataFrame(df, ROI, maxSpeed, timePeriod):
     lat_min, lat_max, lon_min, lon_max = ROI
