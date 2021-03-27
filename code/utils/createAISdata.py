@@ -9,25 +9,26 @@ import numpy as np
 import os
 
 #from utils import protobufDecoder
-from dataset_utils import dataset_utils
+from utils import dataset_utils
 from Config import config
  
 def FindMMSIs():   ##Your implementation of step 1
     
     mmsis = pd.DataFrame(columns=['MMSI','File']) #Allocate dataframe
     
-    directory = r"..Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
+    ##directory = r"..\..\..\Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
+    directory = r"C:\Users\asm\OneDrive - Netcompany\University\Master Thesis\Codebase\Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
         
     for file in progressbar.progressbar(os.listdir(directory)):  #For each JSON file
     
-    
-        data = ReadJSONfile(file) #Read the JSON file
+        fileName = os.path.join(directory,file)
+        data = ReadJSONfile(fileName) #Read the JSON file
 
         #Make a DataFrame with columns timestamp, lat, lon, speed, course
         df = pd.DataFrame(columns=['timestamp','lat','lon','speed','course'])
         
         #Fill df with the information from the JSON path information (data['Path'])
-        for msg in data['Path'][0]:
+        for msg in data['path'][0]:
             df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],'speed': msg[3],'course': msg[4]}, ignore_index=True)
         
         #For each row in df determine the applicable Navigation Status. and add this new column, navstatus, to df
@@ -92,12 +93,12 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
 
 def ReadJSONfile(file):
         
-    if filename.endswith(".json"):
+    if file.endswith(".json"):
         
         try:
             
-            f = pd.read_json(file)
-            return f
+            data = pd.read_json(file)
+            return data
             
         except:
             
