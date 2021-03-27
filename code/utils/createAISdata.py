@@ -6,23 +6,37 @@ import progressbar
 import pickle
 import pandas as pd
 import numpy as np
+import os
 
-from utils import protobufDecoder
+#from utils import protobufDecoder
+from utils import dataset_utils
 from Config import config
  
 def FindMMSIs():   ##Your implementation of step 1
     
     mmsis = pd.DataFrame(columns=['MMSI','File']) #Allocate dataframe
+    
+    directory = r"..Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
         
-    for file in progressbar.progressbar():  #For each JSON file
-        data = ReadJSONfile #Read the JSON file
+    for file in progressbar.progressbar(os.listdir(directory)):  #For each JSON file
+    
+    
+        data = ReadJSONfile(file) #Read the JSON file
 
         #Make a DataFrame with columns timestamp, lat, lon, speed, course
-        df =
+        df = pd.DataFrame(columns=['timestamp','lat','lon','speed','course'])
         
         #Fill df with the information from the JSON path information (data['Path'])
+        for msg in data['Path']:
+            df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],'speed': msg[3],'course': msg[4]}, ignore_index=True)
         
         #For each row in df determine the applicable Navigation Status. and add this new column, navstatus, to df
+        df['navstatus'] = 'other' # default value for the column
+        statusIdx = 0
+        for index, row in df.iterrows():
+            if statusIdx+1 < len(data['statushist']) and row['timestamp'] >= data['statushist'][statusIdx+1]:
+                statusIdx += 1 # updates to new navigation status
+            row['navstatus'] = convertNavStatusToId(data['statushist'][statusIdx]) # last known nav. status
         
         #Filter for all params x = x[x[:,LAT]>=LAT_MIN] ect.
         lat_min, lat_max, lon_min, lon_max = ROI
@@ -39,7 +53,7 @@ def FindMMSIs():   ##Your implementation of step 1
             ]
 
         #If rows left in dataframe and shiptype isin Shiptypes 
-        if len(df.index) > 0 && data["shiptype"] isin shiptypes:
+        if len(df.index) > 0 and data["shiptype"] is in shiptypes:
             new_row = {'MMSI': data["mmsi"],
                        'File': PathToTheJSONFile
                       } #Allocate new row for dataframe mmsis
@@ -74,6 +88,21 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
     df.sort_values(['timestamp'], inplace=True)
     
     return df, stype
+
+
+def ReadJSONfile(file):
+        
+    if filename.endswith(".json"):
+        
+        try:
+            
+            f = pd.read_json(file)
+            return f
+            
+        except:
+            
+            print("File is not accessible")
+
 
 def FilterDataFrame(df, ROI, maxSpeed, timePeriod):
     lat_min, lat_max, lon_min, lon_max = ROI
