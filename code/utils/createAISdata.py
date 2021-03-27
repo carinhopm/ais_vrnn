@@ -59,7 +59,14 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
         stype = data['shiptype']
         
         #Convert .path and .status to dataframe similar to before
-        df =
+        df = pd.DataFrame(columns=['timestamp','lat','lon','speed','course','navstatus'])
+        statusIdx = 0
+        for msg in data['Path']:
+            if statusIdx+1 < len(data['statushist']) and msg[0] >= data['statushist'][statusIdx+1]:
+                statusIdx += 1 # updates to new navigation status
+            df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],
+                            'speed': msg[3],'course': msg[4],
+                            'navstatus': convertNavStatusToId(data['statushist'][statusIdx])}, ignore_index=True)
         
         dataframes.append(df) #Append df to list
 
@@ -183,7 +190,7 @@ def createAISdataset(params, dataset_filename):
         for mmsi in progressbar.progressbar(pd.unique(mmsis['MMSI'])): #Step 2
             tmp = mmsis.loc[mmsis['MMSI']==mmsi,:]
 
-            data, shipType = ReadAndJoinData() #Step 2.1
+            data, shipType = ReadAndJoinData(tmp['File']) #Step 2.1
             data = FilterDataFrame(data, params['ROI'], params['maxspeed'], params['timeperiod']) #Step 2.2
             data = FilterOutStationaryNavStatus(data) #Step 2.3
             data = SplitIntoTracks(data, 900) #Step 2.4
