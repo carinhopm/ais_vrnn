@@ -17,7 +17,7 @@ def FindMMSIs():   ##Your implementation of step 1
     mmsis = pd.DataFrame(columns=['MMSI','File']) #Allocate dataframe
     
     ##directory = r"..\..\..\Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
-    directory = r"C:\Users\asm\OneDrive - Netcompany\University\Master Thesis\Codebase\Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
+    directory = r"C:\\Users\\carlo\\workspace\\special_course\\data\\test\\"
         
     for file in progressbar.progressbar(os.listdir(directory)):  #For each JSON file
     
@@ -32,12 +32,15 @@ def FindMMSIs():   ##Your implementation of step 1
             df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],'speed': msg[3],'course': msg[4]}, ignore_index=True)
         
         #For each row in df determine the applicable Navigation Status. and add this new column, navstatus, to df
-        df['navstatus'] = 'other' # default value for the column
-        statusIdx = 0
-        for index, row in df.iterrows():
-            if statusIdx+1 < len(data['statushist']) and row['timestamp'] >= data['statushist'][statusIdx+1]:
-                statusIdx += 1 # updates to new navigation status
-            row['navstatus'] = convertNavStatusToId(data['statushist'][statusIdx]) # last known nav. status
+        if 'statushist' in data:
+            df['navstatus'] = 'other' # default value for the column
+            statusIdx = 0
+            for index, row in df.iterrows():
+                if statusIdx+1 < len(data['statushist']) and row['timestamp'] >= data['statushist'][statusIdx+1]:
+                    statusIdx += 1 # updates to new navigation status idx.
+                row['navstatus'] = dataset_utils.convertNavStatusToId(data['statushist'][statusIdx]) # last known nav. status
+        else:
+            df['navstatus'] = dataset_utils.convertNavStatusToId(data['lastStatus']) # last known nav. status
         
         #Filter for all params x = x[x[:,LAT]>=LAT_MIN] ect.
         lat_min, lat_max, lon_min, lon_max = ROI
@@ -77,11 +80,16 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
         df = pd.DataFrame(columns=['timestamp','lat','lon','speed','course','navstatus'])
         statusIdx = 0
         for msg in data['Path']:
-            if statusIdx+1 < len(data['statushist']) and msg[0] >= data['statushist'][statusIdx+1]:
-                statusIdx += 1 # updates to new navigation status
-            df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],
-                            'speed': msg[3],'course': msg[4],
-                            'navstatus': convertNavStatusToId(data['statushist'][statusIdx])}, ignore_index=True)
+            if 'statushist' in data:
+                if statusIdx+1 < len(data['statushist']) and msg[0] >= data['statushist'][statusIdx+1]:
+                    statusIdx += 1 # updates to new navigation status
+                df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],
+                                'speed': msg[3],'course': msg[4],
+                                'navstatus': dataset_utils.convertNavStatusToId(data['statushist'][statusIdx])}, ignore_index=True)
+            else:
+                df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],
+                                'speed': msg[3],'course': msg[4],
+                                'navstatus': dataset_utils.convertNavStatusToId(data['lastStatus'])}, ignore_index=True)
         
         dataframes.append(df) #Append df to list
 

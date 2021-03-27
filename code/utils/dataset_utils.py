@@ -130,13 +130,13 @@ def convertNavStatusToId(navStatus):
         'restricted maneuverability': '3',
         'constrained by her draught': '4',
         'moored': '5',
-        'aground ': '6',
+        'aground': '6',
         'engaged in fishing': '7',
         'under way sailing': '8',
         'undefined': 'other'
     }
     
-    return choices.get(navStatus, 'other')
+    return choices.get(navStatus.lower(), 'other')
 
 class AISDataset(torch.utils.data.Dataset):
     def __init__(self, infoPath, train_mean = None):
