@@ -10,7 +10,6 @@ import importlib
 import sys
 import re
 import pickle
-from IPython.display import clear_output
 from mpl_toolkits import mplot3d
 from io import BytesIO
 from math import log, exp, tan, atan, ceil
@@ -20,7 +19,7 @@ from PIL import Image
 from utils import dataset_utils
 from utils import createAISdata
 #from utils import protobufDecoder
-from utils import plotting
+#from utils import plotting
 from models import VRNN
 from Config import config
 

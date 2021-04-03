@@ -1,0 +1,3 @@
+# Run these commands from the folder code and create other folder there called logs
+bsub < preprocessing.sh
+bstat

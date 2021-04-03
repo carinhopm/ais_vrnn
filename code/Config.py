@@ -4,7 +4,7 @@ import numpy as np
 
 class config(object):
     
-    datasets_path = 'C:\\Users\\carlo\\workspace\\special_course\\data\\test\\'
+    datasets_path = '/zhome/e3/a/144459/workspace/ais_outlier_detection/data/test/'
     datapath = os.path.join(datasets_path,'CargTank_idxs_test')
     
     T_MIN = datetime.datetime(2020, 10, 1, 0, 0, 0, 0).timestamp() #2020-10-1 00:00:00.000
