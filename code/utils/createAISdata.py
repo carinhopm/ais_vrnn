@@ -13,18 +13,18 @@ import json
 from utils import dataset_utils
 from Config import config
  
-def FindMMSIs(ROI, maxSpeed, timePeriod, navTypes):   ##Your implementation of step 1
+def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes):   ##Your implementation of step 1
     
     mmsis = pd.DataFrame(columns=['MMSI','File']) #Allocate dataframe
     
     #directory = r"C:\Users\asm\OneDrive - Netcompany\University\Master Thesis\Codebase\Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
-    directory = r"C:\\Users\\carlo\\workspace\\special_course\\data\\test\\"
+    #directory = r"C:\\Users\\carlo\\workspace\\special_course\\data\\test\\"
         
     for file in progressbar.progressbar(os.listdir(directory)):  #For each JSON file
     
         
         fileName = os.path.join(directory,file)
-        print("processing filename: ", fileName)
+        print("\nProcessing filename: ", fileName)
         data = ReadJSONfile(fileName) #Read the JSON file
 
         #Make a DataFrame with columns timestamp, lat, lon, speed, course
@@ -217,17 +217,18 @@ def dumpTrackToPickle(mmsi, shiptype, track, file):
     
     return index
 
-def createAISdataset(params, dataset_filename):
+def createAISdataset(params, datasets_path, dataset_filename):
     
     maxUpdates = params['maxTrackLength']/params['resampleFrequency']
     minUpdates = params['minTrackLength']/params['resampleFrequency']
     fixedLength = params['maxTrackLength']==params['minTrackLength']
       
     print('Finding MMSIs in ROI')
-    mmsis = FindMMSIs(params['ROI'], params['maxspeed'], params['timeperiod'], params['shiptypes']) #Step 1
+    mmsis = FindMMSIs(datasets_path, params['ROI'], params['maxspeed'], params['timeperiod'], params['shiptypes']) #Step 1
     
     #dataFileName = 'C:\Users\asm\OneDrive - Netcompany\University\Master Thesis\Codebase\Data\aisMixJSON_1904XX\aisMixJSON_1904XX' + dataset_filename + '.pkl'
-    dataFileName = 'C:\\Users\\carlo\\workspace\\special_course\\data\\test\\' + dataset_filename + '.pkl'
+    #dataFileName = 'C:\\Users\\carlo\\workspace\\special_course\\data\\test\\' + dataset_filename + '.pkl'
+    dataFileName = dataset_filename + '.pkl'
     with open(dataFileName,'wb') as dataFile:
         print('Processing MMSIs')
         indicies = []
@@ -273,8 +274,5 @@ def createAISdataset(params, dataset_filename):
         'maxTrackLength': params['maxTrackLength'], 
         'resampleFrequency': params['resampleFrequency']  
     }
-    
-    with open('data/datasetInfo_' + dataset_filename + '.pkl','wb') as file:
-        pickle.dump(track_indcies, file)                                            #Save the location of all the tracks in another pickle
     
     return track_indcies

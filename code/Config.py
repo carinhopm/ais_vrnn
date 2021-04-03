@@ -4,9 +4,8 @@ import numpy as np
 
 class config(object):
     
-    #datasets_path = '/store/datasets'
-    datasets_path = ''
-    datapath = os.path.join(datasets_path,'Ais_Test')
+    datasets_path = 'C:\\Users\\carlo\\workspace\\special_course\\data\\test\\'
+    datapath = os.path.join(datasets_path,'CargTank_idxs_test')
     
     T_MIN = datetime.datetime(2020, 10, 1, 0, 0, 0, 0).timestamp() #2020-10-1 00:00:00.000
     T_MAX = datetime.datetime(2020, 12, 31, 23, 59, 59, 999).timestamp() #2020-12-31 23:59:59.999
