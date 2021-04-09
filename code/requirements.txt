@@ -1,0 +1,9 @@
+torch
+torchvision
+progressbar2
+matplotlib
+seaborn
+numpy
+pandas
+requests
+datetime
