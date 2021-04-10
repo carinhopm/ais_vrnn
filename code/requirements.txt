@@ -1,9 +1,9 @@
-torch
-torchvision
+torch==0.4.1
+torchvision==0.2.1
 progressbar2
-matplotlib
+matplotlib==2.2.2
 seaborn
-numpy
-pandas
+numpy==1.14.3
+pandas==0.23.4
 requests
 datetime
