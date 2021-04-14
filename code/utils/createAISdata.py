@@ -12,32 +12,25 @@ import json
 #from utils import protobufDecoder
 from utils import dataset_utils
 from Config import config
+
+import timeit
  
-def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes):   ##Your implementation of step 1
+def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Your implementation of step 1
     
-    mmsis = pd.DataFrame(columns=['MMSI','File']) #Allocate dataframe
-    
-    #directory = r"C:\Users\asm\OneDrive - Netcompany\University\Master Thesis\Codebase\Data\aisMixJSON_1904XX\aisMixJSON_1904XX"
-    #directory = r"C:\\Users\\carlo\\workspace\\special_course\\data\\test\\"
-        
+    mmsis_list = []
+
     for file in progressbar.progressbar(os.listdir(directory)):  #For each JSON file
     
-        
         fileName = os.path.join(directory,file)
         print("\nProcessing filename: ", fileName)
         data = ReadJSONfile(fileName) #Read the JSON file
-
-        #Make a DataFrame with columns timestamp, lat, lon, speed, course
-        df = pd.DataFrame(columns=['timestamp','lat','lon','speed','course'])
-        
                 
         #Fill df with the information from the JSON path information (data['Path'])
-        
+        path_list = []
         for i in range(len(data['path'])):
-            
             msg = data['path'][i]
-        #for msg in data[0]['path'][0]:
-            df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],'speed': msg[3],'course': msg[4]}, ignore_index=True)
+            path_list.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],'speed': msg[3],'course': msg[4]})
+        df = pd.DataFrame(path_list)
         
         #For each row in df determine the applicable Navigation Status. and add this new column, navstatus, to df
         if 'statushist' in data.keys():
@@ -68,11 +61,15 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes):   ##Your implemen
         #If rows left in dataframe and shiptype isin Shiptypes 
         if len(df.index) > 0 and data["shiptype"].isin(shiptypes):
             new_row = {'MMSI': data["mmsi"],
-                       'File': PathToTheJSONFile
+                       'File': fileName
                       } #Allocate new row for dataframe mmsis
-            mmsis = mmsis.append(new_row, ignore_index=True) #Add the new row
+            mmsis_list.append(new_row) #Add the new row
     
-    mmsis.sort_values(['MMSI'], inplace=True)
+    if len(mmsis_list) > 0:
+        mmsis = pd.DataFrame(mmsis_list)
+        mmsis.sort_values(['MMSI'], inplace=True)
+    else:
+        mmsis = pd.DataFrame(columns=['MMSI','File']) #Allocate empty dataframe
     
     return mmsis
 
@@ -86,20 +83,21 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
         stype = data['shiptype']
         
         #Convert .path and .status to dataframe similar to before
-        df = pd.DataFrame(columns=['timestamp','lat','lon','speed','course','navstatus'])
+        path_list = []
         for msg in data['path']:
             if 'statushist' in data.keys():
                 statusHist = data['statushist']
                 currentStatus = 'other'
-                if row['timestamp'] in statusHist.keys():
-                    currentStatus = statusHist.get(row['timestamp']) # updates to new navigation status
-                df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],
+                if msg[0] in statusHist.keys():
+                    currentStatus = statusHist.get(msg[0]) # updates to new navigation status
+                path_list.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],
                                 'speed': msg[3],'course': msg[4],
-                                'navstatus': dataset_utils.convertNavStatusToId(currentStatus)}, ignore_index=True)
+                                'navstatus': dataset_utils.convertNavStatusToId(currentStatus)})
             else:
-                df = df.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],
+                path_list.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],
                                 'speed': msg[3],'course': msg[4],
-                                'navstatus': dataset_utils.convertNavStatusToId(data['lastStatus'])}, ignore_index=True)
+                                'navstatus': dataset_utils.convertNavStatusToId(data['lastStatus'])})
+        df = pd.DataFrame(path_list)
         
         dataframes.append(df) #Append df to list
 
@@ -219,15 +217,14 @@ def dumpTrackToPickle(mmsi, shiptype, track, file):
 
 def createAISdataset(params, datasets_path, dataset_filename):
     
+    start_total_time = timeit.default_timer()
     maxUpdates = params['maxTrackLength']/params['resampleFrequency']
     minUpdates = params['minTrackLength']/params['resampleFrequency']
     fixedLength = params['maxTrackLength']==params['minTrackLength']
       
     print('Finding MMSIs in ROI')
-    mmsis = FindMMSIs(datasets_path, params['ROI'], params['maxspeed'], params['timeperiod'], params['shiptypes']) #Step 1
+    mmsis = FindMMSIs(datasets_path, params['ROI'], params['maxspeed'], params['timeperiod'], params['navstatuses'], params['shiptypes']) #Step 1
     
-    #dataFileName = 'C:\Users\asm\OneDrive - Netcompany\University\Master Thesis\Codebase\Data\aisMixJSON_1904XX\aisMixJSON_1904XX' + dataset_filename + '.pkl'
-    #dataFileName = 'C:\\Users\\carlo\\workspace\\special_course\\data\\test\\' + dataset_filename + '.pkl'
     dataFileName = dataset_filename + '.pkl'
     with open(dataFileName,'wb') as dataFile:
         print('Processing MMSIs')
@@ -274,5 +271,9 @@ def createAISdataset(params, datasets_path, dataset_filename):
         'maxTrackLength': params['maxTrackLength'], 
         'resampleFrequency': params['resampleFrequency']  
     }
+    
+    elapsed_total = timeit.default_timer() - start_total_time
+    print('Total elapsed time:')
+    print(elapsed_total)
     
     return track_indcies
