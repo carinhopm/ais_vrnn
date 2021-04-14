@@ -30,7 +30,7 @@ print(f">> Using device: {device}")
 
 #shiptypes = config.SHIPTYPE_CARGO + config.SHIPTYPE_FISHING + config.SHIPTYPE_PASSENGER +config.SHIPTYPE_TANKER + config.SHIPTYPE_SAILING + config.SHIPTYPE_PLEASURE
 shiptypes = config.SHIPTYPE_CARGO + config.SHIPTYPE_TANKER
-shipFileName = 'CargTank_2002'
+shipFileName = 'aisMix_2002'
 binedges = (config.LAT_EDGES, config.LON_EDGES, config.SOG_EDGES, config.COG_EDGES)
 batch_size = 32
 

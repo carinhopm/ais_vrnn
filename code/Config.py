@@ -5,7 +5,7 @@ import numpy as np
 class config(object):
     
     datasets_path = '/zhome/e3/a/144459/workspace/ais_outlier_detection/data/aisMixJSON_2002XX/'
-    datapath = os.path.join(datasets_path,'CargTank_2002_idxs')
+    datapath = os.path.join(datasets_path,'aisMix_2002_idxs')
     
     T_MIN = datetime.datetime(2020, 10, 1, 0, 0, 0, 0).timestamp() #2020-10-1 00:00:00.000
     T_MAX = datetime.datetime(2020, 12, 31, 23, 59, 59, 999).timestamp() #2020-12-31 23:59:59.999
