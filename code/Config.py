@@ -4,7 +4,9 @@ import numpy as np
 
 class config(object):
     
-    datasets_path = '/zhome/e3/a/144459/workspace/ais_outlier_detection/data/aisMixJSON_2002XX/'
+    #datasets_path = 'C:\Users\asm\OneDrive - Netcompany\University\Master Thesis\Codebase\Data\aisMixJSON_1904XX\'
+    datasets_path = 'C:\\Users\\carlo\\workspace\\special_course\\data\\test\\'
+    #datasets_path = '/zhome/e3/a/144459/workspace/ais_outlier_detection/data/aisMixJSON_2002XX/'
     datapath = os.path.join(datasets_path,'aisMix_2002_idxs')
     
     T_MIN = datetime.datetime(2020, 10, 1, 0, 0, 0, 0).timestamp() #2020-10-1 00:00:00.000

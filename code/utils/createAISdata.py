@@ -22,9 +22,18 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
     for file in progressbar.progressbar(os.listdir(directory)):  #For each JSON file
     
         fileName = os.path.join(directory,file)
+        
+        #Skip problematic JSONs
+        if fileName[0] is '_':
+            print("\nSkipping file ", fileName)
+            continue
+        elif '_TheRest_' in fileName:
+            print("\nSkipping file ", fileName)
+            continue
+        
         print("\nProcessing filename: ", fileName)
         data = ReadJSONfile(fileName) #Read the JSON file
-                
+        
         #Fill df with the information from the JSON path information (data['Path'])
         path_list = []
         for i in range(len(data['path'])):
@@ -64,7 +73,7 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
                        'File': fileName
                       } #Allocate new row for dataframe mmsis
             mmsis_list.append(new_row) #Add the new row
-    
+        
     if len(mmsis_list) > 0:
         mmsis = pd.DataFrame(mmsis_list)
         mmsis.sort_values(['MMSI'], inplace=True)
