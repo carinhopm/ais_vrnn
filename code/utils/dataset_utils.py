@@ -94,6 +94,35 @@ def convertShipTypeToName(shipType):
     
     return choices.get(shipType, 'Other')
 
+def convertNameToShipType(name):
+    
+    choices = {
+        'Wing In ground': '28', 
+        'SAR Aircraft': '29', 
+        'Fishing': '30', 
+        'Tug': '52', 
+        'Dredger': '33', 
+        'Dive Vessel': '34', 
+        'Military': '35', 
+        'Sailing': '36', 
+        'Pleasure': '37', 
+        'High Speed Vessel': '49', 
+        'Pilot': '50', 
+        'SAR Ship': '51', 
+        'Port Tender': '53', 
+        'Anti-Pollution': '54', 
+        'Law Enforcement': '55', 
+        'Local Vessel': '57', 
+        'Medical transfer': '58', 
+        'Special Craft': '59', 
+        'Passenger': '69', 
+        'Cargo': '79', 
+        'Tanker': '89', 
+        'Other': '99'
+    }
+    
+    return int(choices.get(name, '100'))
+
 def classNames():
     names = [
         'Cargo',
@@ -132,11 +161,10 @@ def convertNavStatusToId(navStatus):
         'moored': '5',
         'aground': '6',
         'engaged in fishing': '7',
-        'under way sailing': '8',
-        'undefined': 'other'
+        'under way sailing': '8'
     }
     
-    return choices.get(navStatus.lower(), 'other')
+    return int(choices.get(navStatus.lower(), '0'))
 
 class AISDataset(torch.utils.data.Dataset):
     def __init__(self, infoPath, train_mean = None):
