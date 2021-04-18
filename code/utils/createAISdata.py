@@ -24,7 +24,7 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
         fileName = os.path.join(directory,file)
         
         #Skip problematic JSONs
-        if fileName[0] is '_':
+        if fileName[0] == '_':
             print("\nSkipping file ", fileName)
             continue
         elif '_TheRest_' in fileName:
@@ -38,7 +38,7 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
         path_list = []
         for i in range(len(data['path'])):
             msg = data['path'][i]
-            path_list.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],'speed': msg[3],'course': msg[4]})
+            path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]),'lon': int(msg[2]),'speed': int(msg[3]),'course': int(msg[4])})
         df = pd.DataFrame(path_list)
         
         #For each row in df determine the applicable Navigation Status. and add this new column, navstatus, to df
@@ -47,8 +47,8 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
             df['navstatus'] = 'other' # default value for the column
             currentStatus = 'other'
             for index, row in df.iterrows():
-                if row['timestamp'] in statusHist.keys():
-                    currentStatus = statusHist.get(row['timestamp']) # updates to new navigation status
+                if str(row['timestamp']) in statusHist.keys():
+                    currentStatus = statusHist.get(str(row['timestamp'])) # updates to new navigation status
                 row['navstatus'] = dataset_utils.convertNavStatusToId(currentStatus) # last known nav. status
         else:
             df['navstatus'] = dataset_utils.convertNavStatusToId(data['lastStatus']) # last known nav. status
@@ -63,12 +63,11 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
             (df['lat']<=lat_max) &
             (df['lon']>=lon_min) &
             (df['lon']<=lon_max) &
-            (df['speed']<=maxSpeed) &
-            (df['navstatus'].isin(navTypes))
+            (df['speed']<=maxSpeed)
             ]
 
         #If rows left in dataframe and shiptype isin Shiptypes 
-        if len(df.index) > 0 and data["shiptype"].isin(shiptypes):
+        if len(df.index) > 0 and int(dataset_utils.convertNameToShipType(data['shiptype'])) in shiptypes:
             new_row = {'MMSI': data["mmsi"],
                        'File': fileName
                       } #Allocate new row for dataframe mmsis
@@ -89,7 +88,7 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
     for file in JSONfiles:
         data = ReadJSONfile(file) #Read the JSON file
         
-        stype = data['shiptype']
+        stype = int(dataset_utils.convertNameToShipType(data['shiptype']))
         
         #Convert .path and .status to dataframe similar to before
         path_list = []
@@ -97,14 +96,14 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
             if 'statushist' in data.keys():
                 statusHist = data['statushist']
                 currentStatus = 'other'
-                if msg[0] in statusHist.keys():
-                    currentStatus = statusHist.get(msg[0]) # updates to new navigation status
-                path_list.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],
-                                'speed': msg[3],'course': msg[4],
+                if str(msg[0]) in statusHist.keys():
+                    currentStatus = statusHist.get(str(msg[0])) # updates to new navigation status
+                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]),'lon': int(msg[2]),
+                                'speed': int(msg[3]),'course': int(msg[4]),
                                 'navstatus': dataset_utils.convertNavStatusToId(currentStatus)})
             else:
-                path_list.append({'timestamp': msg[0],'lat': msg[1],'lon': msg[2],
-                                'speed': msg[3],'course': msg[4],
+                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]),'lon': int(msg[2]),
+                                'speed': int(msg[3]),'course': int(msg[4]),
                                 'navstatus': dataset_utils.convertNavStatusToId(data['lastStatus'])})
         df = pd.DataFrame(path_list)
         
@@ -141,6 +140,7 @@ def FilterDataFrame(df, ROI, maxSpeed, timePeriod):
     return df
 
 def FilterOutStationaryNavStatus(df):
+    
     df = df.loc[(~df['navstatus'].isin(config.STAT_NAV_STATUSES))]
     
     return df
@@ -166,9 +166,10 @@ def RemoveShortTracks(df, min_time, min_updates):
     
     return df
 
-def InterpolateTrackAndResample(df, frequency):
+def InterpolateTrackAndResample(df, frequency, offset):
     
-    df["timestamp"] = df["timestamp"].apply(datetime.datetime.fromtimestamp)
+    #Transform relative timestamps to real ones using the offset
+    df["timestamp"] = df["timestamp"].apply(lambda x: datetime.datetime.fromtimestamp(x + offset))
     df = df.set_index('timestamp').resample(str(frequency) + 'S', origin='start').mean()
     df = df.reset_index(level=0, inplace=False)
     df = df.interpolate("linear")
@@ -230,6 +231,7 @@ def createAISdataset(params, datasets_path, dataset_filename):
     maxUpdates = params['maxTrackLength']/params['resampleFrequency']
     minUpdates = params['minTrackLength']/params['resampleFrequency']
     fixedLength = params['maxTrackLength']==params['minTrackLength']
+    timeOffset = params['timeOffset']
       
     print('Finding MMSIs in ROI')
     mmsis = FindMMSIs(datasets_path, params['ROI'], params['maxspeed'], params['timeperiod'], params['navstatuses'], params['shiptypes']) #Step 1
@@ -250,7 +252,7 @@ def createAISdataset(params, datasets_path, dataset_filename):
             mmsiTracks = data.groupby('TrackNumber') #This actually carries out the splitting based on step 2.4
             for tracknum, track in mmsiTracks:         # For each track
 
-                track = InterpolateTrackAndResample(track, params['resampleFrequency'])    #Step 2.6 
+                track = InterpolateTrackAndResample(track, params['resampleFrequency'], timeOffset)    #Step 2.6 
 
                 if fixedLength==True:
                     groups = track.groupby(np.arange(len(track.index))//maxUpdates) #Split ensure max length   ##Step 2.7

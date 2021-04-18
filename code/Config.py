@@ -9,14 +9,15 @@ class config(object):
     datasets_path = '/zhome/e3/a/144459/workspace/ais_outlier_detection/data/aisMixJSON_2002XX/'
     datapath = os.path.join(datasets_path,'aisMix_2002_idxs')
     
-    T_MIN = datetime.datetime(2020, 10, 1, 0, 0, 0, 0).timestamp() #2020-10-1 00:00:00.000
-    T_MAX = datetime.datetime(2020, 12, 31, 23, 59, 59, 999).timestamp() #2020-12-31 23:59:59.999
+    T_OFFSET = int(datetime.datetime(2019, 1, 1, 0, 0, 0, 0).timestamp()) #2019-1-1 00:00:00.000
+    T_MIN = int(datetime.datetime(2019, 1, 1, 0, 0, 0, 0).timestamp()) - T_OFFSET #2019-1-1 00:00:00.000
+    T_MAX = int(datetime.datetime(2020, 12, 31, 23, 59, 59, 999).timestamp()) - T_OFFSET #2020-12-31 23:59:59.999
     
-    LAT_MIN = 54.5
-    LAT_MAX = 56
-    LON_MIN = 13
-    LON_MAX = 16
-    SOG_MAX = 15.5
+    LAT_MIN = int(54.5 * 600000)
+    LAT_MAX = 56 * 600000
+    LON_MIN = 13 * 600000
+    LON_MAX = 16 * 600000
+    SOG_MAX = int(15.5 * 10)
     
     LAT_MIN_PUBLIC = 45
     LAT_MAX_PUBLIC = 51

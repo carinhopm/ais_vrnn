@@ -44,7 +44,8 @@ tracks = createAISdata.createAISdataset(
      'minTrackLength': config.MIN_TRACKLENGTH,
      'maxTrackLength': config.MAX_TRACKLENGTH, 
      'minTrackUpdate': config.MIN_TRACKUPDATES, 
-     'resampleFrequency': config.RESAMPLEFREQ
+     'resampleFrequency': config.RESAMPLEFREQ,
+     'timeOffset': config.T_OFFSET
     },
     datasets_path = config.datasets_path,
     dataset_filename = config.datapath
