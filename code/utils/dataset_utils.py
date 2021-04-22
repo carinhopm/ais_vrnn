@@ -175,10 +175,13 @@ class AISDataset(torch.utils.data.Dataset):
         with open(self.Infopath, "rb") as f:
             self.params = pickle.load(f)
         
+        '''
         if train_mean==None:
             self.indicies = self.params['trainIndicies']
         else:
             self.indicies = self.params['testIndicies']
+        '''
+        self.indicies = self.params['indicies']
         
         self.datapath = self.params['dataFileName']
         self.datasetN = len(self.indicies)
