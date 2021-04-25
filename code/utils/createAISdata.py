@@ -269,7 +269,7 @@ def createAISdataset(params, datasets_path, dataset_filename):
                         indicies.append(index)                                                 #Save the location of the pickled track
     
     #Extra step to split indicies into train and test sets
-    trainIndicies, testIndicies = train_test_split(indicies, test_size=0.33, random_state=42)
+    trainIndicies, testIndicies = train_test_split(indicies, test_size=0.20, random_state=42)
     
     track_indcies = {
         'trainIndicies': trainIndicies,
