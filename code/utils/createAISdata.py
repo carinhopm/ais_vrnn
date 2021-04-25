@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import os
 import json
+from sklearn.model_selection import train_test_split
 
 #from utils import protobufDecoder
 from utils import dataset_utils
@@ -38,20 +39,18 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
         path_list = []
         for i in range(len(data['path'])):
             msg = data['path'][i]
-            path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]),'lon': int(msg[2]),'speed': int(msg[3]),'course': int(msg[4])})
+            #For each row determine if its navigation status is within 'navTypes'
+            if 'statushist' in data.keys():
+                statusHist = data['statushist']
+                currentStatus = 'other'
+                if msg[0] in statusHist.keys():
+                    currentStatus = statusHist.get(msg[0]) # updates to new navigation status
+                currentStatus = dataset_utils.convertNavStatusToId(currentStatus) # last known nav. status
+            else:
+                currentStatus = dataset_utils.convertNavStatusToId(data['lastStatus']) # last known nav. status
+            if currentStatus in navTypes:
+                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]),'lon': int(msg[2]),'speed': int(msg[3]),'course': int(msg[4]),'navstatus': currentStatus})
         df = pd.DataFrame(path_list)
-        
-        #For each row in df determine the applicable Navigation Status. and add this new column, navstatus, to df
-        if 'statushist' in data.keys():
-            statusHist = data['statushist']
-            df['navstatus'] = 'other' # default value for the column
-            currentStatus = 'other'
-            for index, row in df.iterrows():
-                if str(row['timestamp']) in statusHist.keys():
-                    currentStatus = statusHist.get(str(row['timestamp'])) # updates to new navigation status
-                row['navstatus'] = dataset_utils.convertNavStatusToId(currentStatus) # last known nav. status
-        else:
-            df['navstatus'] = dataset_utils.convertNavStatusToId(data['lastStatus']) # last known nav. status
         
         #Filter for all params x = x[x[:,LAT]>=LAT_MIN] ect.
         lat_min, lat_max, lon_min, lon_max = ROI
@@ -267,10 +266,14 @@ def createAISdataset(params, datasets_path, dataset_filename):
                     for trackSegment in np.array_split(track, num_tracks):
                         #Save each tracksegment
                         index = dumpTrackToPickle(mmsi, shipType, trackSegment, dataFile)      #Save segment to pickle
-                        indicies.append(index)                                                  #Save the location of the pickled track
+                        indicies.append(index)                                                 #Save the location of the pickled track
+    
+    #Extra step to split indicies into train and test sets
+    trainIndicies, testIndicies = train_test_split(indicies, test_size=0.20, random_state=42)
     
     track_indcies = {
-        'indicies': indicies,
+        'trainIndicies': trainIndicies,
+        'testIndicies': testIndicies,
         'dataFileName': dataFileName,
         'ROI': params['ROI'], 
         'timeperiod': params['timeperiod'], 
@@ -284,7 +287,7 @@ def createAISdataset(params, datasets_path, dataset_filename):
     }
     
     elapsed_total = timeit.default_timer() - start_total_time
-    print('Total elapsed time:')
+    print('Total elapsed time used to generate the dataset:')
     print(elapsed_total)
     
     return track_indcies
