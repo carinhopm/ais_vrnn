@@ -31,6 +31,9 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
         elif '_TheRest_' in fileName:
             print("\nSkipping file ", fileName)
             continue
+        elif 'xxxx' in fileName:
+            print("\nSkipping file ", fileName)
+            continue
         
         print("\nProcessing filename: ", fileName)
         data = ReadJSONfile(fileName) #Read the JSON file
