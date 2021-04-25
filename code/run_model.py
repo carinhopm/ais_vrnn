@@ -16,7 +16,6 @@ from io import BytesIO
 from math import log, exp, tan, atan, ceil
 from PIL import Image
 
-#from utils import dataset_utils
 from utils import dataset_utils
 from utils import createAISdata
 #from utils import protobufDecoder
@@ -26,15 +25,18 @@ from Config import config
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f">> Using device: {device}")
+if device=="cuda:0":
+    torch.no_grad()
+    torch.cuda.empty_cache()
 #timestamp = datetime.datetime.fromtimestamp(update.t_epoch_sec).strftime('%d/%m/%Y %H:%M:%S')
 
 #shiptypes = config.SHIPTYPE_CARGO + config.SHIPTYPE_FISHING + config.SHIPTYPE_PASSENGER +config.SHIPTYPE_TANKER + config.SHIPTYPE_SAILING + config.SHIPTYPE_PLEASURE
 shiptypes = config.SHIPTYPE_CARGO + config.SHIPTYPE_TANKER
-shipFileName = 'aisMix_2002'
+shipFileName = 'test'
 binedges = (config.LAT_EDGES, config.LON_EDGES, config.SOG_EDGES, config.COG_EDGES)
 batch_size = 32
 
-'''
+
 tracks = createAISdata.createAISdataset(
     {'ROI': (config.LAT_MIN, config.LAT_MAX, config.LON_MIN, config.LON_MAX), 
      'timeperiod': (config.T_MIN, config.T_MAX), 
@@ -54,8 +56,7 @@ tracks = createAISdata.createAISdataset(
 
 with open(config.datasets_path + shipFileName + ".pkl", "wb") as f:
         pickle.dump(tracks, f)
-'''
-        
+      
 ##dataset_utils.makeDatasetSplits(shipFileName, '24hour_' + shipFileName) ##Probably need to change this function
 
 class PadSequence:
@@ -84,13 +85,12 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffl
 train_n = len(trainset)
 test_n = len(testset)
 num_batches = len(train_loader)
-#num_epochs = ceil(80000/num_batches)
-num_epochs = 1
+num_epochs = ceil(80000/num_batches)
 
 print(len(trainset))
 print(len(testset))
 
-mmsi, _, _, _, x = trainset[0]
+#mmsi, _, _, _, x = trainset[0]
 #plotting.Plot4HotEncodedTrack(x, binedges, ax=None)
 
 model = VRNN.VRNN(input_shape=trainset.datadim, latent_shape=100, generative_bias=trainset.mean, device=device)
@@ -207,4 +207,3 @@ trainingCurves = {
 torch.save(model.state_dict(), 'models/model_' + shipFileName + '.pth')
 with open('models/trainingCurves_' + shipFileName + '.pkl', "wb") as f:
         pickle.dump(trainingCurves, f)
-
