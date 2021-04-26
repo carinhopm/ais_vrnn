@@ -31,9 +31,6 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
         elif '_TheRest_' in fileName:
             print("\nSkipping file ", fileName)
             continue
-        elif 'xxxx' in fileName:
-            print("\nSkipping file ", fileName)
-            continue
         
         print("\nProcessing filename: ", fileName)
         data = ReadJSONfile(fileName) #Read the JSON file
@@ -56,24 +53,25 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
         df = pd.DataFrame(path_list)
         
         #Filter for all params x = x[x[:,LAT]>=LAT_MIN] ect.
-        lat_min, lat_max, lon_min, lon_max = ROI
-        t_min, t_max = timePeriod
-        df = df.loc[
-            (df['timestamp']>=t_min) &
-            (df['timestamp']<=t_max) &
-            (df['lat']>=lat_min) &
-            (df['lat']<=lat_max) &
-            (df['lon']>=lon_min) &
-            (df['lon']<=lon_max) &
-            (df['speed']<=maxSpeed)
-            ]
+        if len(df.index) > 0:
+            lat_min, lat_max, lon_min, lon_max = ROI
+            t_min, t_max = timePeriod
+            df = df.loc[
+                (df['timestamp']>=t_min) &
+                (df['timestamp']<=t_max) &
+                (df['lat']>=lat_min) &
+                (df['lat']<=lat_max) &
+                (df['lon']>=lon_min) &
+                (df['lon']<=lon_max) &
+                (df['speed']<=maxSpeed)
+                ]
 
-        #If rows left in dataframe and shiptype isin Shiptypes 
-        if len(df.index) > 0 and int(dataset_utils.convertNameToShipType(data['shiptype'])) in shiptypes:
-            new_row = {'MMSI': data["mmsi"],
-                       'File': fileName
-                      } #Allocate new row for dataframe mmsis
-            mmsis_list.append(new_row) #Add the new row
+            #If rows left in dataframe and shiptype isin Shiptypes 
+            if len(df.index) > 0 and int(dataset_utils.convertNameToShipType(data['shiptype'])) in shiptypes:
+                new_row = {'MMSI': data["mmsi"],
+                           'File': fileName
+                          } #Allocate new row for dataframe mmsis
+                mmsis_list.append(new_row) #Add the new row
         
     if len(mmsis_list) > 0:
         mmsis = pd.DataFrame(mmsis_list)
