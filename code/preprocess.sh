@@ -3,7 +3,7 @@
 ### –- specify queue --
 #BSUB -q gpuk80
 ### -- set the job Name --
-#BSUB -J aisMix_2002
+#BSUB -J CargTank_1912
 ### -- ask for number of cores (default: 1) --
 #BSUB -n 1
 ### -- specify that the cores should be in the same host --
@@ -12,10 +12,10 @@
 #BSUB -gpu "num=1:mode=exclusive_process"
 ### -- set walltime limit: hh:mm --  maximum 24 hours for GPU-queues right now
 #BSUB -W 24:00
-# request 2GB of system-memory per core
-#BSUB -R "rusage[mem=8GB]"
-### -- specify that we want the job to get killed if it exceeds 5GB per core/slot --
-#BSUB -M 8GB
+# request 16GB of system-memory per core
+#BSUB -R "rusage[mem=16GB]"
+### -- specify that we want the job to get killed if it exceeds 8GB per core/slot --
+#BSUB -M 16GB
 ### -- set the email address --
 # please uncomment the following line and put in your e-mail address,
 # if you want to receive e-mail notifications on a non-default address
@@ -26,8 +26,8 @@
 #BSUB -N
 ### -- Specify the output and error file. %J is the job-id --
 ### -- -o and -e mean append, -oo and -eo mean overwrite --
-#BSUB -o logs/aisMix_2002_%J.out
-#BSUB -e logs/aisMix_2002_%J.err
+#BSUB -o logs/CargTank_1912_%J.out
+#BSUB -e logs/CargTank_1912_%J.err
 # -- end of LSF options --
 
 
@@ -50,8 +50,8 @@ source ./python_env/bin/activate
 echo "Setup completed. Running script...\n"
 
 #python3 checking.py
-python3 run_model.py
-
+#python3 run_model.py
+fil-profile run run_model.py
 
 
 

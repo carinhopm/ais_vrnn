@@ -6,8 +6,8 @@ class config(object):
     
     #datasets_path = 'C:\Users\asm\OneDrive - Netcompany\University\Master Thesis\Codebase\Data\aisMixJSON_1904XX\'
     #datasets_path = 'C:\\Users\\carlo\\workspace\\special_course\\data\\test\\'
-    datasets_path = '/zhome/e3/a/144459/workspace/ais_outlier_detection/data/aisMixJSON_2002XX/'
-    datapath = os.path.join(datasets_path,'aisMix_2002_idxs')
+    datasets_path = '/zhome/e3/a/144459/workspace/ais_outlier_detection/data/aisMixJSONX_1912XX/'
+    datapath = os.path.join(datasets_path,'CargTank_1912_idxs')
     
     T_OFFSET = int(datetime.datetime(2019, 1, 1, 0, 0, 0, 0).timestamp()) #2019-1-1 00:00:00.000
     T_MIN = int(datetime.datetime(2019, 1, 1, 0, 0, 0, 0).timestamp()) - T_OFFSET #2019-1-1 00:00:00.000
@@ -25,8 +25,8 @@ class config(object):
     LON_MAX_PUBLIC = 0
     SOG_MAX_PUBLIC = 15.5 #????
     
-    LAT_RES = 0.01
-    LON_RES = 0.01
+    LAT_RES = 10
+    LON_RES = 10
     SOG_RES = 0.5
     COG_RES = 5
     
