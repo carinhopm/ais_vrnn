@@ -36,7 +36,6 @@ shipFileName = 'test'
 binedges = (config.LAT_EDGES, config.LON_EDGES, config.SOG_EDGES, config.COG_EDGES)
 batch_size = 32
 
-
 tracks = createAISdata.createAISdataset(
     {'ROI': (config.LAT_MIN, config.LAT_MAX, config.LON_MIN, config.LON_MAX), 
      'timeperiod': (config.T_MIN, config.T_MAX), 
@@ -77,9 +76,9 @@ class PadSequence:
         return  torch.tensor(mmsis),  torch.tensor(shiptypes),  torch.tensor(lengths, dtype=torch.float), inputs_padded, targets_padded
 
 # different lengths (use max/min for dimensions)
-trainset = dataset_utils.AISDataset("data/train_CarFishPassTankSailPlea.pkl")
+trainset = dataset_utils.AISDataset(config.datasets_path + "train_CarFishPassTankSailPlea.pkl")
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
-testset = dataset_utils.AISDataset("data/test_CarFishPassTankSailPlea.pkl", train_mean = trainset.mean)
+testset = dataset_utils.AISDataset(config.datasets_path + "test_CarFishPassTankSailPlea.pkl", train_mean = trainset.mean)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
 
 train_n = len(trainset)
@@ -180,19 +179,19 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
     
     print('Epoch {} of {} finished. Trainingloss = {}. Validationloss = {}'.format(epoch, num_epochs, loss_epoch/train_n, val_loss/test_n))
     
+    trainingCurves = {
+        'loss_tot': loss_tot,
+        'kl_tot': kl_tot,
+        'recon_tot': recon_tot,
+        'val_loss_tot': val_loss_tot,
+        'val_kl_tot': val_kl_tot,
+        'val_recon_tot': val_recon_tot
+    }
+    with open('models/saved_models/trainingCurves_' + shipFileName + '.pkl', "wb") as f:
+        pickle.dump(trainingCurves, f)
+    
     if (epoch%10==0):
         torch.save(model.state_dict(), 'models/saved_models/model_' + shipFileName + '_' + str(epoch) + '.pth')
-        
-        trainingCurves = {
-            'loss_tot': loss_tot,
-            'kl_tot': kl_tot,
-            'recon_tot': recon_tot,
-            'val_loss_tot': val_loss_tot,
-            'val_kl_tot': val_kl_tot,
-            'val_recon_tot': val_recon_tot
-        }
-        with open('models/saved_models/trainingCurves_' + shipFileName + '.pkl', "wb") as f:
-            pickle.dump(trainingCurves, f)
         
 
 trainingCurves = {
