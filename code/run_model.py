@@ -23,6 +23,9 @@ from utils import createAISdata
 from models import VRNN
 from Config import config
 
+# To measure the training time
+from time import time
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f">> Using device: {device}")
 if device=="cuda:0":
@@ -36,6 +39,7 @@ shipFileName = 'test'
 binedges = (config.LAT_EDGES, config.LON_EDGES, config.SOG_EDGES, config.COG_EDGES)
 batch_size = 32
 
+'''
 tracks = createAISdata.createAISdataset(
     {'ROI': (config.LAT_MIN, config.LAT_MAX, config.LON_MIN, config.LON_MAX), 
      'timeperiod': (config.T_MIN, config.T_MAX), 
@@ -55,7 +59,9 @@ tracks = createAISdata.createAISdataset(
 
 with open(config.datasets_path + shipFileName + ".pkl", "wb") as f:
         pickle.dump(tracks, f)
-      
+
+'''
+    
 ##dataset_utils.makeDatasetSplits(shipFileName, '24hour_' + shipFileName) ##Probably need to change this function
 
 class PadSequence:
@@ -75,11 +81,26 @@ class PadSequence:
 
         return  torch.tensor(mmsis),  torch.tensor(shiptypes),  torch.tensor(lengths, dtype=torch.float), inputs_padded, targets_padded
 
+print('Available GPU memory step 1: ', get_gpu_memory())
 # different lengths (use max/min for dimensions)
+tic = time()
 trainset = dataset_utils.AISDataset(config.datasets_path + "train_CarFishPassTankSailPlea.pkl")
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
+toc = time()
+
+print("Time taken to load training " ,(toc-tic))
+print('Available GPU memory step 2: ', get_gpu_memory())
+
+
+tic = time()
+
 testset = dataset_utils.AISDataset(config.datasets_path + "test_CarFishPassTankSailPlea.pkl", train_mean = trainset.mean)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
+
+toc = time()
+print("Time taken to load testset " ,(toc-tic))
+
+print('Available GPU memory step 3: ', get_gpu_memory())
 
 train_n = len(trainset)
 test_n = len(testset)
@@ -92,7 +113,15 @@ print(len(testset))
 #mmsi, _, _, _, x = trainset[0]
 #plotting.Plot4HotEncodedTrack(x, binedges, ax=None)
 
+tic = time()
+
 model = VRNN.VRNN(input_shape=trainset.datadim, latent_shape=100, generative_bias=trainset.mean, device=device)
+
+toc = time()
+print("Time taken to load model " ,(toc-tic))
+
+print('Available GPU memory step 4: ', get_gpu_memory())
+
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0003)
 
 load_model = False
@@ -126,6 +155,8 @@ val_loss_tot = []
 val_kl_tot = []
 val_recon_tot = []
 for epoch in range(1, num_epochs+1): #num_epochs+1
+    
+    tic = time()
     #Begin training loop
     loss_epoch = 0
     kl_epoch = 0
@@ -178,6 +209,12 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
     #plotting.make_vae_plots((loss_tot, kl_tot, recon_tot, val_loss_tot, val_kl_tot, val_recon_tot), model, datapoints, testset, binedges, device)
     
     print('Epoch {} of {} finished. Trainingloss = {}. Validationloss = {}'.format(epoch, num_epochs, loss_epoch/train_n, val_loss/test_n))
+    
+    toc = time()
+    print("Time taken to train and test in {} epoch is {}".format(epoch, (toc-tic)))
+    
+    print('Available GPU memory after epoch {} is {}: '.format(epoch, get_gpu_memory()))
+
     
     trainingCurves = {
         'loss_tot': loss_tot,

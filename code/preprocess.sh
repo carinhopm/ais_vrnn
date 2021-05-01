@@ -51,6 +51,7 @@ echo "Setup completed. Running script...\n"
 
 #python3 checking.py
 #python3 run_model.py
+#python3 generatePickleFile.py
 fil-profile run run_model.py
 
 
