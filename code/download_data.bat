@@ -1,0 +1,1 @@
+scp s192770@login1.gbar.dtu.dk:/zhome/e3/a/144459/workspace/ais_outlier_detection/ais_vrnn/code/models/trainingCurves_CargTank_1911_latent75.pkl .
