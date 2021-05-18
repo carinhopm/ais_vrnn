@@ -6,6 +6,10 @@ import re
 import datetime
 import math
 import torch
+import sys
+
+import subprocess as sp
+import os
 
 from utils import createAISdata
 
@@ -167,8 +171,10 @@ def convertNavStatusToId(navStatus):
     return int(choices.get(navStatus.lower(), '0'))
 
 class AISDataset(torch.utils.data.Dataset):
-    def __init__(self, infoPath, train_mean = None):
-        self.Infopath = infoPath
+    def __init__(self, dataPath, fileName, train_mean = None):
+        #self.Infopath = infoPath
+        
+        self.Infopath = dataPath + fileName
         
         self.classnames, _ = classNames()
 
@@ -180,7 +186,7 @@ class AISDataset(torch.utils.data.Dataset):
         else:
             self.indicies = self.params['testIndicies']
         
-        self.datapath = self.params['dataFileName']
+        self.datapath = dataPath + self.params['dataFileName']
         self.datasetN = len(self.indicies)
         
         lat_edges, lon_edges, speed_edges, course_edges = self.params['binedges']
@@ -219,6 +225,8 @@ class AISDataset(torch.utils.data.Dataset):
         sum_all = np.zeros((self.datadim))
         total_updates = 0
         
+        print('self.datapath',self.datapath)
+                
         for index in self.indicies:
             with open(self.datapath,'rb') as file:
                 file.seek(index)
@@ -233,7 +241,7 @@ class AISDataset(torch.utils.data.Dataset):
         return torch.tensor(mean, dtype=torch.float)
     
     def getLabels(self):
-        
+                
         labels = []
         with torch.no_grad():
             for index in self.indicies:
@@ -243,3 +251,19 @@ class AISDataset(torch.utils.data.Dataset):
                     labels.append(np.where(convertShipTypeToName(str(track['shiptype']))==self.classnames)[0][0])
         
         return torch.tensor(labels)
+    
+    def get_gpu_memory():
+        
+        _output_to_list = lambda x: x.decode('ascii').split('\n')[:-1]
+    
+        ACCEPTABLE_AVAILABLE_MEMORY = 1024
+        COMMAND = "nvidia-smi --query-gpu=memory.free --format=csv"
+        memory_free_info = _output_to_list(sp.check_output(COMMAND.split()))[1:]
+        memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
+        print(memory_free_values)
+        return memory_free_values
+    
+    
+    def eprint(*args, **kwargs):
+        
+        print(*args, file=sys.stderr, **kwargs)
