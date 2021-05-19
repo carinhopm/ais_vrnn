@@ -16,3 +16,7 @@ source ./python_env/bin/activate
 
 # install needed packages
 pip3 install -U -r requirements.txt
+
+# create necessary directories
+mkdir -p logs
+mkdir -p models/saved_models

@@ -30,11 +30,10 @@ if device=="cuda:0":
     torch.cuda.empty_cache()
 #timestamp = datetime.datetime.fromtimestamp(update.t_epoch_sec).strftime('%d/%m/%Y %H:%M:%S')
 
-#shiptypes = config.SHIPTYPE_CARGO + config.SHIPTYPE_FISHING + config.SHIPTYPE_PASSENGER +config.SHIPTYPE_TANKER + config.SHIPTYPE_SAILING + config.SHIPTYPE_PLEASURE
 shiptypes = config.SHIPTYPE_CARGO + config.SHIPTYPE_TANKER
 shipFileName = 'test'
 binedges = (config.LAT_EDGES, config.LON_EDGES, config.SOG_EDGES, config.COG_EDGES)
-batch_size = 32
+batch_size = 4
 
 tracks = createAISdata.createAISdataset(
     {'ROI': (config.LAT_MIN, config.LAT_MAX, config.LON_MIN, config.LON_MAX), 
@@ -76,15 +75,15 @@ class PadSequence:
         return  torch.tensor(mmsis),  torch.tensor(shiptypes),  torch.tensor(lengths, dtype=torch.float), inputs_padded, targets_padded
 
 # different lengths (use max/min for dimensions)
-trainset = dataset_utils.AISDataset(config.datasets_path + "train_CarFishPassTankSailPlea.pkl")
+trainset = dataset_utils.AISDataset(config.datasets_path + "CargTank_1911.pkl")
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
-testset = dataset_utils.AISDataset(config.datasets_path + "test_CarFishPassTankSailPlea.pkl", train_mean = trainset.mean)
+testset = dataset_utils.AISDataset(config.datasets_path + "CargTank_1911.pkl", train_mean = trainset.mean)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
 
 train_n = len(trainset)
 test_n = len(testset)
 num_batches = len(train_loader)
-num_epochs = ceil(80000/num_batches)
+num_epochs = 20
 
 print(len(trainset))
 print(len(testset))
@@ -190,7 +189,7 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
     with open('models/saved_models/trainingCurves_' + shipFileName + '.pkl', "wb") as f:
         pickle.dump(trainingCurves, f)
     
-    if (epoch%10==0):
+    if (epoch%5==0):
         torch.save(model.state_dict(), 'models/saved_models/model_' + shipFileName + '_' + str(epoch) + '.pth')
         
 
