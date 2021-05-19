@@ -20,9 +20,9 @@ bsub < run_model_hpc.sh
 
 ## Contributing
 
-This repository has been created by:
+The contributors of this repository are:
 
-Carlos Parra Marcelo
-Ashwinth Mathivanan
+- Carlos Parra Marcelo
+- Ashwinth Mathivanan
 
 The code is an updated version of the implementation provided by Kristoffer V. Olesen.
