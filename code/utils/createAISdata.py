@@ -275,7 +275,7 @@ def createAISdataset(params, datasets_path, dataset_filename):
     track_indcies = {
         'trainIndicies': trainIndicies,
         'testIndicies': testIndicies,
-        'dataFileName': dataFileName,
+        'dataFileName': config.index_fileName,
         'ROI': params['ROI'], 
         'timeperiod': params['timeperiod'], 
         'maxspeed': params['maxspeed'], 
