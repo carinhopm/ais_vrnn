@@ -49,7 +49,7 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
             else:
                 currentStatus = dataset_utils.convertNavStatusToId(data['lastStatus']) # last known nav. status
             if currentStatus in navTypes:
-                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/config.lat_lon_multiply_factor),'lon': int(msg[2]/config.lat_lon_multiply_factor),'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]),'navstatus': currentStatus})
+                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/config.lat_lon_multiply_factor),'lon': int(msg[2]/config.lat_lon_multiply_factor),'speed': int(msg[3]/config.SOG_multiply_factor),'course': int(msg[4]),'navstatus': currentStatus})
         df = pd.DataFrame(path_list)
         
         #Filter for all params x = x[x[:,LAT]>=LAT_MIN] ect.
