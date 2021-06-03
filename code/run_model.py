@@ -23,6 +23,9 @@ from utils import createAISdata
 from models import VRNN
 from Config import config
 
+# To measure the training time
+from time import time
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f">> Using device: {device}")
 if device=="cuda:0":
@@ -34,9 +37,9 @@ if device=="cuda:0":
 shiptypes = config.SHIPTYPE_CARGO + config.SHIPTYPE_TANKER
 shipFileName = 'test'
 binedges = (config.LAT_EDGES, config.LON_EDGES, config.SOG_EDGES, config.COG_EDGES)
-batch_size = 32
+batch_size = 4
 
-tracks = createAISdata.createAISdataset(
+'''tracks = createAISdata.createAISdataset(
     {'ROI': (config.LAT_MIN, config.LAT_MAX, config.LON_MIN, config.LON_MAX), 
      'timeperiod': (config.T_MIN, config.T_MAX), 
      'maxspeed': config.SOG_MAX, 
@@ -54,8 +57,8 @@ tracks = createAISdata.createAISdataset(
 )
 
 with open(config.datasets_path + shipFileName + ".pkl", "wb") as f:
-        pickle.dump(tracks, f)
-      
+        pickle.dump(tracks, f)'''
+    
 ##dataset_utils.makeDatasetSplits(shipFileName, '24hour_' + shipFileName) ##Probably need to change this function
 
 class PadSequence:
@@ -76,23 +79,27 @@ class PadSequence:
         return  torch.tensor(mmsis),  torch.tensor(shiptypes),  torch.tensor(lengths, dtype=torch.float), inputs_padded, targets_padded
 
 # different lengths (use max/min for dimensions)
-trainset = dataset_utils.AISDataset(config.datasets_path + "train_CarFishPassTankSailPlea.pkl")
+trainset = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank_1911.pkl")
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
-testset = dataset_utils.AISDataset(config.datasets_path + "test_CarFishPassTankSailPlea.pkl", train_mean = trainset.mean)
+
+testset = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank_1911.pkl", train_mean = trainset.mean)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
 
 train_n = len(trainset)
 test_n = len(testset)
 num_batches = len(train_loader)
-num_epochs = ceil(80000/num_batches)
+#num_epochs = ceil(80000/num_batches)
+num_epochs = 8
 
-print(len(trainset))
-print(len(testset))
+dataset_utils.eprint(len(trainset))
+dataset_utils.eprint(len(testset))
 
 #mmsi, _, _, _, x = trainset[0]
 #plotting.Plot4HotEncodedTrack(x, binedges, ax=None)
 
-model = VRNN.VRNN(input_shape=trainset.datadim, latent_shape=100, generative_bias=trainset.mean, device=device)
+model = VRNN.VRNN(input_shape=trainset.datadim, latent_shape=config.LATENT_SIZE, generative_bias=trainset.mean, device=device)
+
+
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0003)
 
 load_model = False
@@ -126,6 +133,8 @@ val_loss_tot = []
 val_kl_tot = []
 val_recon_tot = []
 for epoch in range(1, num_epochs+1): #num_epochs+1
+    
+    tic = time()
     #Begin training loop
     loss_epoch = 0
     kl_epoch = 0
@@ -177,7 +186,10 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
     datapoints = np.random.choice(test_n, size = 3, replace=False)
     #plotting.make_vae_plots((loss_tot, kl_tot, recon_tot, val_loss_tot, val_kl_tot, val_recon_tot), model, datapoints, testset, binedges, device)
     
-    print('Epoch {} of {} finished. Trainingloss = {}. Validationloss = {}'.format(epoch, num_epochs, loss_epoch/train_n, val_loss/test_n))
+    dataset_utils.eprint('Epoch {} of {} finished. Trainingloss = {}. Validationloss = {}'.format(epoch, num_epochs, loss_epoch/train_n, val_loss/test_n))
+    
+    toc = time()
+    dataset_utils.eprint("Time taken to train and test in {} epoch is {}".format(epoch, (toc-tic)))
     
     trainingCurves = {
         'loss_tot': loss_tot,
@@ -202,6 +214,13 @@ trainingCurves = {
     'val_kl_tot': val_kl_tot,
     'val_recon_tot': val_recon_tot
 }
+
+dataset_utils.eprint('loss_tot: {}'.format(loss_tot))
+dataset_utils.eprint('kl_tot: {}'.format(kl_tot))
+dataset_utils.eprint('recon_tot: {}'.format(recon_tot))
+dataset_utils.eprint('val_loss_tot: {}'.format(val_loss_tot))
+dataset_utils.eprint('val_kl_tot: {}'.format(val_kl_tot))
+dataset_utils.eprint('val_recon_tot: {}'.format(val_recon_tot))
 
 torch.save(model.state_dict(), 'models/model_' + shipFileName + '.pth')
 with open('models/trainingCurves_' + shipFileName + '.pkl', "wb") as f:

@@ -12,10 +12,10 @@
 #BSUB -gpu "num=1:mode=exclusive_process"
 ### -- set walltime limit: hh:mm --  maximum 24 hours for GPU-queues right now
 #BSUB -W 24:00
-# request 16GB of system-memory per core
-#BSUB -R "rusage[mem=16GB]"
+# request 32GB of system-memory per core
+#BSUB -R "rusage[mem=32GB]"
 ### -- specify that we want the job to get killed if it exceeds 8GB per core/slot --
-#BSUB -M 16GB
+#BSUB -M 32GB
 ### -- set the email address --
 # please uncomment the following line and put in your e-mail address,
 # if you want to receive e-mail notifications on a non-default address

@@ -41,24 +41,32 @@ class VRNN(nn.Module):
         self.device = device
         self.generative_bias = generative_bias.to(self.device)
 
+        ## Feature extractor. It extracts necessary input data
+        ## Input : sequence of four 
         self.phi_x = nn.Sequential(nn.Linear(self.input_shape, self.latent_shape),
+                                   #nn.Tanh(),
                                    nn.ReLU(),
                                    nn.Linear(self.latent_shape, self.latent_shape))
 
+        
         self.phi_z = nn.Sequential(nn.Linear(self.latent_shape, self.latent_shape),
+                                   #nn.Tanh(),
                                    nn.ReLU(),
                                    nn.Linear(self.latent_shape, self.latent_shape))
 
         self.prior = nn.Sequential(nn.Linear(self.latent_shape, self.latent_shape),
+                                   #nn.Tanh(),
                                    nn.ReLU(),
                                    nn.Linear(self.latent_shape, 2*self.latent_shape))
 
         self.encoder = nn.Sequential(nn.Linear(2*self.latent_shape, self.latent_shape),
+                                     #nn.Tanh(),
                                      nn.ReLU(),
                                      nn.Linear(self.latent_shape, 2*self.latent_shape))
 
         self.decoder = nn.Sequential(nn.Linear(2*self.latent_shape, self.latent_shape),
                                      nn.ReLU(),
+                                     #nn.Tanh(),
                                      nn.Linear(self.latent_shape, self.input_shape))
 
         self.rnn = nn.LSTM(input_size = 2*self.latent_shape, hidden_size = self.latent_shape)
@@ -88,6 +96,7 @@ class VRNN(nn.Module):
 
         return ReparameterizedDiagonalGaussian(mu, sigma)
 
+    ## This should return a guassion instead if we are using continous input. 
     def generative(self, z_enc, h):
         px_logits = self.decoder(torch.cat([z_enc, h], dim=1))
         px_logits = px_logits + self.generative_bias
@@ -100,11 +109,17 @@ class VRNN(nn.Module):
         inputs = inputs.permute(1,0,2) #seq_len X batchsize X data_dim
         targets = targets.permute(1,0,2) #seq_len X batchsize X data_dim
         
+        ## Hidden state at each time step
         hs = torch.zeros(seq_len, batch_size, self.latent_shape, device = self.device) # Init LSTM hidden state output. seq_len X batch X latent
+        
+        ## Last hidden state from LSTM
         out = torch.zeros(batch_size, self.latent_shape, device = self.device) # Init LSTM hidden state
         log_px = []
         log_pz = []
         log_qz = []
+        h = torch.zeros(1,batch_size, self.latent_shape, device = self.device) # Init LSTM hidden state
+        c = torch.zeros(1,batch_size, self.latent_shape, device = self.device) # Init LSTM cell
+
         for t in range(seq_len):
             x = inputs[t, :, :] #x_hat is batch X input
             y = targets[t, :, :]
@@ -113,31 +128,48 @@ class VRNN(nn.Module):
             x_hat = self.phi_x(x) #x_hat is batch X latent
 
             #Create prior distribution
+            ## Prior distribution knows everything that happenned in the past but has no 
+            ## knowledge about present
             pz = self._prior(out) #out is batch X latent
 
+            ##
             #Create approximate posterior
+            ## out is everything in the past
+            ## x_hat is everything in the present
+            ## We try to create a distribution that can explain both the past using prior and present 
+            ## using the x_hat. But these distribution can be different.
+            ## posterior is the diagonal guassion. This dist is used to restrict the freedom. 
+            ## 
             qz = self.posterior(out, x_hat, prior_mu=pz.mu)
 
             #Sample and embed z from posterior
             z = qz.rsample()
             z_hat = self.phi_z(z) #z_hat is batch X latent
-
+ 
             #Decode z_hat
+            ## px is the prob distribution that should be able to reconstruct the input.
+            ## px is the multivariate burnouilli distribution. 
             px = self.generative(z_hat, out)
 
             #Update h from LSTM
+            ## 
             rnn_input = torch.cat([x_hat, z_hat], dim=1)
             rnn_input = rnn_input.unsqueeze(0) #rnn_input is 1 X batch X 2*latent
-            out, _ = self.rnn(rnn_input) #out is 1 X batch X latent
+            out, (h, c) = self.rnn(rnn_input, (h, c)) #out is 1 X batch X latent
+            #out, _ = self.rnn(rnn_input) #out is 1 X batch X latent
             out = out.squeeze(axis=0)  #out is batch X latent
             
             hs[t,:] = out
             
             #loss
+            ## log_px is the reconstruction loss that is reconstructed using burnoulli distribution. 
             log_px.append(px.log_prob(y).sum(dim=1)) #Sum over dimension
+            ## log_pz is the probably og sampling that we drew from the prior distribution. 
             log_pz.append(pz.log_prob(z).sum(dim=1)) #Sum over dimension
+            ## log_qz is the probability of sampling if we had drawn of posterior.  
             log_qz.append(qz.log_prob(z).sum(dim=1)) #Sum over dimension
             
+            ## qz - pz is the KL divergence
             if logits is not None:
                 logits[t, :, :] = px.logits
         
