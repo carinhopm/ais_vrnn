@@ -13,11 +13,11 @@ class config(object):
     T_MIN = int(datetime.datetime(2019, 1, 1, 0, 0, 0, 0).timestamp()) - T_OFFSET #2019-1-1 00:00:00.000
     T_MAX = int(datetime.datetime(2020, 12, 31, 23, 59, 59, 999).timestamp()) - T_OFFSET #2020-12-31 23:59:59.999
     
-    LAT_MIN = int(54.5 * 600000)
-    LAT_MAX = 56 * 600000
-    LON_MIN = 13 * 600000
-    LON_MAX = 16 * 600000
-    SOG_MAX = int(15.5 * 10)
+    LAT_MIN = int(54.5) # * 600000)
+    LAT_MAX = 56 #* 600000
+    LON_MIN = 13 #* 600000
+    LON_MAX = 16 #* 600000
+    SOG_MAX = int(15.5)  #* 10)
     
     LAT_MIN_PUBLIC = 45
     LAT_MAX_PUBLIC = 51
@@ -25,8 +25,8 @@ class config(object):
     LON_MAX_PUBLIC = 0
     SOG_MAX_PUBLIC = 15.5 #????
     
-    LAT_RES = 10
-    LON_RES = 10
+    LAT_RES = 0.1 #10
+    LON_RES = 0.1 #10
     SOG_RES = 0.5
     COG_RES = 5
     
@@ -64,3 +64,9 @@ class config(object):
 
     #CONFIGURATION FOR MODEL
     LATENT_SIZE = 100
+
+    #Factor the longitude and lattitude in multiplied by in the original data
+    lat_lon_multiply_factor = 600000
+
+    #Factor the SOG is multiplied by in the original data
+    SOG_multiply_factor = 10
