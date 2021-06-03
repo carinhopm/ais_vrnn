@@ -4,9 +4,9 @@ import numpy as np
 
 class config(object):
     
-    #datasets_path = 'C:\Users\asm\OneDrive - Netcompany\University\Master Thesis\Codebase\Data\aisMixJSON_1904XX\'
-    #datasets_path = 'C:\\Users\\carlo\\workspace\\special_course\\data\\test\\'
-    datasets_path = '/zhome/e3/a/144459/workspace/ais_outlier_detection/data/CargTank_1911/'
+    datasets_path = 'C://Users//asm//OneDrive - Netcompany//University//Master Thesis//pickleFiles//'
+    #datasets_path = '/zhome/e3/a/144459/workspace/ais_outlier_detection/data/CargTank_1911/'
+    index_fileName = 'CargTank_1911_idxs.pkl'
     datapath = os.path.join(datasets_path,'CargTank_1911_idxs')
     
     T_OFFSET = int(datetime.datetime(2019, 1, 1, 0, 0, 0, 0).timestamp()) #2019-1-1 00:00:00.000
@@ -61,3 +61,6 @@ class config(object):
     SHIPTYPE_PASSENGER = [60, 61, 62, 63, 64, 65, 66, 67, 68, 69]
     SHIPTYPE_CARGO = [70, 71, 72, 73, 74, 75, 76, 77, 78, 79]
     SHIPTYPE_TANKER = [80, 81, 82, 83, 84, 85, 86, 87, 88, 89]
+
+    #CONFIGURATION FOR MODEL
+    LATENT_SIZE = 100

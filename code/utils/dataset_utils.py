@@ -6,6 +6,11 @@ import re
 import datetime
 import math
 import torch
+import sys
+
+import subprocess as sp
+import os
+
 
 from utils import createAISdata
 
@@ -167,8 +172,13 @@ def convertNavStatusToId(navStatus):
     return int(choices.get(navStatus.lower(), '0'))
 
 class AISDataset(torch.utils.data.Dataset):
-    def __init__(self, infoPath, train_mean = None):
-        self.Infopath = infoPath
+    def __init__(self, dataPath,fileName, indexFileName , train_mean = None):
+        #self.Infopath = infoPath
+
+        self.Infopath = dataPath + fileName
+
+        eprint('dataPath: {}'.format(dataPath))
+        eprint('fileName: {}'.format(fileName))
         
         self.classnames, _ = classNames()
 
@@ -181,6 +191,17 @@ class AISDataset(torch.utils.data.Dataset):
             self.indicies = self.params['testIndicies']
         
         self.datapath = self.params['dataFileName']
+
+        eprint('self.params[dataFileName]: {}'.format(self.params['dataFileName']))
+        #eprint('dataPath: {}'.format(dataPath)
+
+      #########################################################################
+        #self.datapath = dataPath + self.params['dataFileName']                 #
+        self.datapath = dataPath + indexFileName #'CargTank_1911_idxs.pkl'                    #  
+        #                                                                      #   
+        ########################################################################
+
+
         self.datasetN = len(self.indicies)
         
         lat_edges, lon_edges, speed_edges, course_edges = self.params['binedges']
@@ -218,6 +239,8 @@ class AISDataset(torch.utils.data.Dataset):
         
         sum_all = np.zeros((self.datadim))
         total_updates = 0
+
+        print('self.datapath',self.datapath)
         
         for index in self.indicies:
             with open(self.datapath,'rb') as file:
@@ -243,3 +266,7 @@ class AISDataset(torch.utils.data.Dataset):
                     labels.append(np.where(convertShipTypeToName(str(track['shiptype']))==self.classnames)[0][0])
         
         return torch.tensor(labels)
+
+def eprint(*args, **kwargs):
+
+    print(*args, file=sys.stderr, **kwargs)
