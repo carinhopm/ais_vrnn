@@ -186,6 +186,9 @@ class AISDataset(torch.utils.data.Dataset):
         else:
             self.indicies = self.params['testIndicies']
         
+        eprint('self.params[dataFileName]: {}'.format(self.params['dataFileName']))
+        eprint('dataPath: {}'.format(dataPath)
+        
         self.datapath = dataPath + self.params['dataFileName']
         self.datasetN = len(self.indicies)
         
@@ -264,6 +267,6 @@ class AISDataset(torch.utils.data.Dataset):
         return memory_free_values
     
     
-    def eprint(*args, **kwargs):
-        
-        print(*args, file=sys.stderr, **kwargs)
+def eprint(*args, **kwargs):
+    
+    print(*args, file=sys.stderr, **kwargs)
