@@ -172,7 +172,7 @@ def convertNavStatusToId(navStatus):
     return int(choices.get(navStatus.lower(), '0'))
 
 class AISDataset(torch.utils.data.Dataset):
-    def __init__(self, dataPath,fileName, v, train_mean = None):
+    def __init__(self, dataPath,fileName, indexFileName , train_mean = None):
         #self.Infopath = infoPath
 
         self.Infopath = dataPath + fileName
