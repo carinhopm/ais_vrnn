@@ -14,9 +14,9 @@ class config(object):
     T_MAX = int(datetime.datetime(2020, 12, 31, 23, 59, 59, 999).timestamp()) - T_OFFSET #2020-12-31 23:59:59.999
     
     LAT_MIN = int(54.5) # * 600000)
-    LAT_MAX = 56 #* 600000
+    LAT_MAX = 56.5 #* 600000
     LON_MIN = 13 #* 600000
-    LON_MAX = 16 #* 600000
+    LON_MAX = 17 #* 600000
     SOG_MAX = int(15.5)  #* 10)
     
     LAT_MIN_PUBLIC = 45

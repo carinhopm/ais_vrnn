@@ -219,14 +219,18 @@ class AISDataset(torch.utils.data.Dataset):
         return self.datasetN
 
     def __getitem__(self, idx):
+
+        print('self.datapath ',self.datapath)
             
         index = self.indicies[idx]
-        
+
         with open(self.datapath, 'rb') as file:
             file.seek(index)
             track = pickle.load(file)
         
         tmpdf = pd.DataFrame(track)
+
+        
         encodedTrack = createAISdata.FourHotEncode(tmpdf, self.params['binedges'])
         
         label = np.where(convertShipTypeToName(str(track['shiptype']))==self.classnames)[0][0]
@@ -240,18 +244,21 @@ class AISDataset(torch.utils.data.Dataset):
         sum_all = np.zeros((self.datadim))
         total_updates = 0
 
-        print('self.datapath',self.datapath)
+        print('self.datapath 12',self.datapath)
         
         for index in self.indicies:
             with open(self.datapath,'rb') as file:
                 file.seek(index)
                 track = pickle.load(file)
                 tmpdf = pd.DataFrame(track)
+
                 encodedTrack = createAISdata.FourHotEncode(tmpdf, self.params['binedges'])
                 sum_all += np.sum(encodedTrack,axis = 0) #Sum over all t
                 total_updates += track['track_length']
         
         mean = sum_all/total_updates
+
+        print('index: ', index, '  total_updates: ', total_updates)
         
         return torch.tensor(mean, dtype=torch.float)
     
