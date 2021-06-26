@@ -74,7 +74,7 @@ class VRNN(nn.Module):
         mu, sigma = out.chunk(2, dim=-1) #mu and sigma batch X latent
         
         sigma_min = torch.full_like(sigma, sigma_min)
-        sigma = torch.maximum(torch.nn.functional.softplus(sigma + raw_sigma_bias), sigma_min)
+        sigma = torch.max(torch.nn.functional.softplus(sigma + raw_sigma_bias), sigma_min)
 
         return ReparameterizedDiagonalGaussian(mu, sigma)
 
@@ -84,7 +84,7 @@ class VRNN(nn.Module):
         mu, sigma = hidden.chunk(2, dim=-1)
         
         sigma_min = torch.full_like(sigma, sigma_min)
-        sigma = torch.maximum(torch.nn.functional.softplus(sigma + raw_sigma_bias), sigma_min)
+        sigma = torch.max(torch.nn.functional.softplus(sigma + raw_sigma_bias), sigma_min)
 
         mu = mu + prior_mu
 
@@ -96,7 +96,7 @@ class VRNN(nn.Module):
         px_logits = px_logits + self.generative_bias
         return Bernoulli(logits=px_logits)
 
-    def forward(self, inputs, targets, logits=None):
+    def forward(self, inputs, targets, labels, logits=None):
         
         batch_size, seq_len, datadim = inputs.shape
         
@@ -114,8 +114,18 @@ class VRNN(nn.Module):
 
         h = torch.zeros(1,batch_size, self.latent_shape, device = self.device) # Init LSTM hidden state
         c = torch.zeros(1,batch_size, self.latent_shape, device = self.device) # Init LSTM cell
+        
+        ## Initializing z_mus to store the latent mean vectors 
+        z_mus = torch.zeros(seq_len, len(labels), self.latent_shape, device = self.device)
+        
+        
+        #print('z_mus len {}'.format(z_mus.shape))
 
+        #print('seq_len {}'.format(seq_len))
+        
+        ## seq_len is the time length
         for t in range(seq_len):
+            
             x = inputs[t, :, :] #x_hat is batch X input
             y = targets[t, :, :]
 
@@ -135,7 +145,7 @@ class VRNN(nn.Module):
             ## posterior is the diagonal guassion. This dist is used to restrict the freedom. 
             ## 
             qz = self.posterior(out, x_hat, prior_mu=pz.mu)
-
+            
             #Sample and embed z from posterior
             z = qz.rsample()
             z_hat = self.phi_z(z) #z_hat is batch X latent
@@ -154,6 +164,11 @@ class VRNN(nn.Module):
             
             hs[t,:] = out
             
+            ## qz.mu is of dimension batchSize * latentSize
+            #print('qz mean: {}'.format(qz.mu))
+            
+            z_mus[t, :, :] = qz.mu
+            
             #loss
             ## log_px is the reconstruction loss that is reconstructed using burnoulli distribution. 
             log_px.append(px.log_prob(y).sum(dim=1)) #Sum over dimension
@@ -166,4 +181,4 @@ class VRNN(nn.Module):
             if logits is not None:
                 logits[t, :, :] = px.logits
         
-        return log_px, log_pz, log_qz, logits, hs
+        return log_px, log_pz, log_qz, logits, hs, z_mus
