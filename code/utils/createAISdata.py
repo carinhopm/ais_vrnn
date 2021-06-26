@@ -49,7 +49,7 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
             else:
                 currentStatus = dataset_utils.convertNavStatusToId(data['lastStatus']) # last known nav. status
             if currentStatus in navTypes:
-                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]),'lon': int(msg[2]),'speed': int(msg[3]),'course': int(msg[4]),'navstatus': currentStatus})
+                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/config.lat_lon_multiply_factor),'lon': int(msg[2]/config.lat_lon_multiply_factor),'speed': int(msg[3]/config.SOG_multiply_factor),'course': int(msg[4]),'navstatus': currentStatus})
         df = pd.DataFrame(path_list)
         
         #Filter for all params x = x[x[:,LAT]>=LAT_MIN] ect.
@@ -92,18 +92,20 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
         
         #Convert .path and .status to dataframe similar to before
         path_list = []
+        lat_lon_multiply_factor = config.lat_lon_multiply_factor
+        SOG_multiply_factor = config.SOG_multiply_factor
         for msg in data['path']:
             if 'statushist' in data.keys():
                 statusHist = data['statushist']
                 currentStatus = 'other'
                 if str(msg[0]) in statusHist.keys():
                     currentStatus = statusHist.get(str(msg[0])) # updates to new navigation status
-                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]),'lon': int(msg[2]),
-                                'speed': int(msg[3]),'course': int(msg[4]),
+                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/lat_lon_multiply_factor),'lon': int(msg[2]/lat_lon_multiply_factor),
+                                'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]),
                                 'navstatus': dataset_utils.convertNavStatusToId(currentStatus)})
             else:
-                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]),'lon': int(msg[2]),
-                                'speed': int(msg[3]),'course': int(msg[4]),
+                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/lat_lon_multiply_factor),'lon': int(msg[2]/lat_lon_multiply_factor),
+                                'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]),
                                 'navstatus': dataset_utils.convertNavStatusToId(data['lastStatus'])})
         df = pd.DataFrame(path_list)
         
