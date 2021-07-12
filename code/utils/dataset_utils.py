@@ -172,7 +172,7 @@ def convertNavStatusToId(navStatus):
     return int(choices.get(navStatus.lower(), '0'))
 
 class AISDataset(torch.utils.data.Dataset):
-    def __init__(self, dataPath,fileName, indexFileName , train_mean = None):
+    def __init__(self, dataPath,fileName, train_mean = None):
         #self.Infopath = infoPath
 
         self.Infopath = dataPath + fileName
@@ -190,14 +190,16 @@ class AISDataset(torch.utils.data.Dataset):
         else:
             self.indicies = self.params['testIndicies']
         
-        self.datapath = self.params['dataFileName']
+        #self.datapath = self.params['dataFileName']
+        
+        self.indexFileName = self.params['dataFileName']
 
         eprint('self.params[dataFileName]: {}'.format(self.params['dataFileName']))
         #eprint('dataPath: {}'.format(dataPath)
 
       #########################################################################
         #self.datapath = dataPath + self.params['dataFileName']                 #
-        self.datapath = dataPath + indexFileName #'CargTank_1911_idxs.pkl'                    #  
+        self.datapath = dataPath + self.indexFileName #'CargTank_1911_idxs.pkl'                    #  
         #                                                                      #   
         ########################################################################
 
@@ -214,13 +216,14 @@ class AISDataset(torch.utils.data.Dataset):
             
         self.labels = self.getLabels()
         self.samples_pr_class = torch.bincount(self.labels)
+                
         
     def __len__(self):
         return self.datasetN
 
     def __getitem__(self, idx):
 
-        print('self.datapath ',self.datapath)
+        #print('self.datapath ',self.datapath)
             
         index = self.indicies[idx]
 
@@ -233,10 +236,11 @@ class AISDataset(torch.utils.data.Dataset):
         
         encodedTrack = createAISdata.FourHotEncode(tmpdf, self.params['binedges'])
         
+        
         label = np.where(convertShipTypeToName(str(track['shiptype']))==self.classnames)[0][0]
         targets = torch.tensor(encodedTrack, dtype=torch.float) #seq_len X data_dim
         inputs = targets - self.mean
-        
+                
         return  torch.tensor(track['mmsi']), torch.tensor(label), torch.tensor(track['track_length'], dtype=torch.float), inputs, targets
     
     def computeMean(self):

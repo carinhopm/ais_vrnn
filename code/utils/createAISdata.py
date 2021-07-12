@@ -49,7 +49,7 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
             else:
                 currentStatus = dataset_utils.convertNavStatusToId(data['lastStatus']) # last known nav. status
             if currentStatus in navTypes:
-                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/config.lat_lon_multiply_factor),'lon': int(msg[2]/config.lat_lon_multiply_factor),'speed': int(msg[3]/config.SOG_multiply_factor),'course': int(msg[4]),'navstatus': currentStatus})
+                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/config.lat_lon_multiply_factor),'lon': int(msg[2]/config.lat_lon_multiply_factor),'speed': int(msg[3]/config.SOG_multiply_factor),'course': int(msg[4]/config.COG_multiply_factor),'navstatus': currentStatus})
         df = pd.DataFrame(path_list)
         
         #Filter for all params x = x[x[:,LAT]>=LAT_MIN] ect.
@@ -94,6 +94,8 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
         path_list = []
         lat_lon_multiply_factor = config.lat_lon_multiply_factor
         SOG_multiply_factor = config.SOG_multiply_factor
+        COG_multiply_factor = config.COG_multiply_factor
+        
         for msg in data['path']:
             if 'statushist' in data.keys():
                 statusHist = data['statushist']
@@ -101,11 +103,11 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
                 if str(msg[0]) in statusHist.keys():
                     currentStatus = statusHist.get(str(msg[0])) # updates to new navigation status
                 path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/lat_lon_multiply_factor),'lon': int(msg[2]/lat_lon_multiply_factor),
-                                'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]),
+                                'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]/COG_multiply_factor),
                                 'navstatus': dataset_utils.convertNavStatusToId(currentStatus)})
             else:
                 path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/lat_lon_multiply_factor),'lon': int(msg[2]/lat_lon_multiply_factor),
-                                'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]),
+                                'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]/COG_multiply_factor),
                                 'navstatus': dataset_utils.convertNavStatusToId(data['lastStatus'])})
         df = pd.DataFrame(path_list)
         
@@ -209,6 +211,44 @@ def FourHotEncode(track, edges):
     
     return EncodedTrack
 
+def FindCourseBinLabel(courseList):
+    ##
+    courseMean = round(np.mean(courseList, dtype=np.float64),3)
+    
+    label = 0
+    
+    if(courseMean < 89.75):
+        label = 1
+    elif(courseMean >= 89.75 and courseMean < 179.5):
+        label = 2
+    elif(courseMean >= 179.5 and courseMean < 269.24):
+        label = 3
+    elif(courseMean >= 269.25 and courseMean < 358):
+        label = 4
+    else:
+        label = 5
+        
+    return label
+    
+def FindSpeedBinLabel(speedList):
+    ##
+    speedMean = round(np.mean(speedList, dtype=np.float64),3)
+    
+    label = 0
+    
+    if(speedMean < 3):
+        label = 1
+    elif(speedMean >= 3 and speedMean < 6):
+        label = 2
+    elif(speedMean >= 6 and speedMean < 9):
+        label = 3
+    elif(speedMean >= 9 and speedMean < 12):
+        label = 4
+    else:
+        label = 5
+        
+    return label
+
 def dumpTrackToPickle(mmsi, shiptype, track, file):
     
     savedTrack = {
@@ -219,14 +259,17 @@ def dumpTrackToPickle(mmsi, shiptype, track, file):
         'lon': track["lon"].to_list(),
         'speed': track["speed"].to_list(),
         'course': track["course"].to_list(),
-        'timestamp': track["timestamp"].to_list()
+        'speedBinLabel': FindSpeedBinLabel(track["speed"].to_list()),
+        'courseBinLabel':FindCourseBinLabel(track["course"].to_list()),
+        'timestamp': track["timestamp"].to_list(),
+        
     }
     
     index = file.tell()
     pickle.dump(savedTrack,file)
     
     return index
-
+    
 def createAISdataset(params, datasets_path, dataset_filename):
     
     start_total_time = timeit.default_timer()

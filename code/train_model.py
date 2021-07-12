@@ -78,10 +78,10 @@ class PadSequence:
         return  torch.tensor(mmsis),  torch.tensor(shiptypes),  torch.tensor(lengths, dtype=torch.float), inputs_padded, targets_padded
 
 # different lengths (use max/min for dimensions)
-trainset = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank_1911.pkl", indexFileName = config.index_fileName)
+trainset = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank.pkl")
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
 
-testset = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank_1911.pkl", indexFileName = config.index_fileName, train_mean = trainset.mean)
+testset = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank.pkl", train_mean = trainset.mean)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
 
 train_n = len(trainset)
@@ -140,12 +140,12 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
     kl_epoch = 0
     recon_epoch = 0
     model.train()
-    for i, (_, _, lengths, inputs, targets) in enumerate(train_loader):
+    for i, (mmsi, label, lengths, inputs, targets) in enumerate(train_loader):
         inputs = inputs.to(device)
         targets = targets.to(device)
         lengths = lengths.to(device)
         
-        log_px, log_pz, log_qz, _, _ = model(inputs,targets,logits=None)
+        log_px, log_pz, log_qz, _, _, z_mus = model(inputs,targets,logits=None)
         
         loss, log_px, kl = computeLoss(log_px, log_pz, log_qz, lengths)
         
@@ -156,6 +156,20 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         loss_epoch += loss.item()*len(lengths)
         kl_epoch += torch.sum(kl/lengths).item()
         recon_epoch += torch.sum(log_px/lengths).item()
+        
+        z_means = {
+            'Epoch': epoch,
+            'z_means': z_mus,
+            'labels': label,
+            'log_px': log_px,
+            'log_pz': log_pz,
+            'log_qz': log_qz
+            }
+        
+        with open('models/saved_models/latentSpace_train.pkl', "wb") as f:
+            #
+        
+            pickle.dump(z_means, f)
     
     loss_tot.append(loss_epoch/train_n)
     kl_tot.append(kl_epoch/train_n)
@@ -166,18 +180,32 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
     val_kl = 0
     val_recon = 0
     model.eval()
-    for i, (_, _, lengths, inputs, targets) in enumerate(test_loader):
+    for i, (mmsi, label, lengths, inputs, targets) in enumerate(test_loader):
         inputs = inputs.to(device)
         targets = targets.to(device)
         lengths = lengths.to(device)
         
-        log_px, log_pz, log_qz, _, _ = model(inputs,targets,logits=None)
+        log_px, log_pz, log_qz, _, _, z_mus = model(inputs,targets,logits=None)
         
         loss, log_px, kl = computeLoss(log_px, log_pz, log_qz, lengths)
                 
         val_loss += loss.item()*len(lengths)
         val_kl += torch.sum(kl/lengths).item()
         val_recon += torch.sum(log_px/lengths).item()
+        
+        z_means = {
+            'Epoch': epoch,
+            'z_means': z_mus,
+            'labels': label,
+            'log_px': log_px,
+            'log_pz': log_pz,
+            'log_qz': log_qz
+            }
+        
+        with open('models/saved_models/latentSpace_test.pkl', "wb") as f:
+            #
+        
+            pickle.dump(z_means, f)
     
     val_loss_tot.append(val_loss/test_n)
     val_kl_tot.append(val_kl/test_n)
