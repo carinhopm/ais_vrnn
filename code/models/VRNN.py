@@ -79,6 +79,7 @@ class VRNN(nn.Module):
         return ReparameterizedDiagonalGaussian(mu, sigma)
 
     def posterior(self, hidden, x, prior_mu,  sigma_min=0.0, raw_sigma_bias=0.5):
+        ##Concatenates last hidden state and x (So if A and B are of shape (3, 4), torch.cat([A, B], dim=0) will be of shape (6, 4) )
         encoder_input = torch.cat([hidden, x], dim=1)
         hidden = self.encoder(encoder_input)
         mu, sigma = hidden.chunk(2, dim=-1)

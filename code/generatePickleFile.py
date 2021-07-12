@@ -53,5 +53,6 @@ tracks = createAISdata.createAISdataset(
     dataset_filename = config.datapath
 )
 
+##Primary Pickle file
 with open(config.datasets_path + shipFileName + ".pkl", "wb") as f:
         pickle.dump(tracks, f)

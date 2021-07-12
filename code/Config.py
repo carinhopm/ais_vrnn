@@ -70,3 +70,6 @@ class config(object):
 
     #Factor the SOG is multiplied by in the original data
     SOG_multiply_factor = 10
+    
+    #Factor the COG is multiplied by in the original data
+    COG_multiply_factor = 10
