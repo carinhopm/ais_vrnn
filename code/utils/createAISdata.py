@@ -107,7 +107,7 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
                                 'navstatus': dataset_utils.convertNavStatusToId(currentStatus)})
             else:
                 path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/lat_lon_multiply_factor),'lon': int(msg[2]/lat_lon_multiply_factor),
-                                'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]/COG_multiply_facto),
+                                'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]/COG_multiply_factor),
                                 'navstatus': dataset_utils.convertNavStatusToId(data['lastStatus'])})
         df = pd.DataFrame(path_list)
         
