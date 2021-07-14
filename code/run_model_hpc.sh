@@ -1,7 +1,7 @@
 #!/bin/sh
 ### General options
 ### –- specify queue --
-#BSUB -q gpuk80
+#BSUB -q gpuv100
 ### -- set the job Name --
 #BSUB -J CargTank_1911
 ### -- ask for number of cores (default: 2) --
@@ -49,4 +49,5 @@ source ./python_env/bin/activate
 
 echo "Setup completed. Running training script...\n"
 
-python3 train_model.py
+#python3 train_model.py
+python3 generatePickleFile.py
