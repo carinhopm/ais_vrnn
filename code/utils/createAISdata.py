@@ -242,22 +242,30 @@ def FindCourseDirection(courseList):
     
 def FindSpeedBinLabel(speedList):
     ##
-    speedMean = round(np.mean(speedList, dtype=np.float64),3)
+    #speedMean = round(np.mean(speedList, dtype=np.float64),3)
     
-    label = 0
+    speedList1 = []
     
-    if(speedMean < 3):
-        label = 1
-    elif(speedMean >= 3 and speedMean < 6):
-        label = 2
-    elif(speedMean >= 6 and speedMean < 9):
-        label = 3
-    elif(speedMean >= 9 and speedMean < 12):
-        label = 4
-    else:
-        label = 5
+    for sog in speedList:
         
-    return label
+        ##
+    
+        label = 0
+        
+        if(sog < 3):
+            label = 1
+        elif(sog >= 3 and sog < 6):
+            label = 2
+        elif(sog >= 6 and sog < 9):
+            label = 3
+        elif(sog >= 9 and sog < 12):
+            label = 4
+        else:
+            label = 5
+        
+        speedList1.append(label)
+        
+    return speedList1
 
 def dumpTrackToPickle(mmsi, shiptype, track, file):
     

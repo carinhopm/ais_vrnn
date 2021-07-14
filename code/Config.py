@@ -4,10 +4,11 @@ import numpy as np
 
 class config(object):
     
-    datasets_path = 'C://Users//asm//OneDrive - Netcompany//University//Master Thesis//pickleFiles//'
+    #datasets_path = 'C://Users//asm//OneDrive - Netcompany//University//Master Thesis//pickleFiles//'
+    datasets_path = '/zhome/ef/f/83670/Desktop/Dataset/'
     #datasets_path = '/zhome/e3/a/144459/workspace/ais_outlier_detection/data/CargTank_1911/'
-    index_fileName = 'CargTank_1911_idxs.pkl'
-    datapath = os.path.join(datasets_path,'CargTank_1911_idxs')
+    index_fileName = 'CargTank_idxs.pkl'
+    datapath = os.path.join(datasets_path,'CargTank_idxs')
     
     T_OFFSET = int(datetime.datetime(2019, 1, 1, 0, 0, 0, 0).timestamp()) #2019-1-1 00:00:00.000
     T_MIN = int(datetime.datetime(2019, 1, 1, 0, 0, 0, 0).timestamp()) - T_OFFSET #2019-1-1 00:00:00.000
