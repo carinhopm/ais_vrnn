@@ -98,6 +98,7 @@ class VRNN(nn.Module):
         return Bernoulli(logits=px_logits)
 
     def forward(self, inputs, targets, labels, logits=None):
+    #def forward(self, inputs, targets, logits=None):
         
         batch_size, seq_len, datadim = inputs.shape
         

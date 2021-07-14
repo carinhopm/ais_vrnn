@@ -157,25 +157,27 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         kl_epoch += torch.sum(kl/lengths).item()
         recon_epoch += torch.sum(log_px/lengths).item()
         
-        z_means = {
-            'Epoch': epoch,
-            'z_means': z_mus,
-            'labels': label,
-            'log_px': log_px,
-            'log_pz': log_pz,
-            'log_qz': log_qz
-            }
+        #z_means = {
+        #    'Epoch': epoch,
+        #    'z_means': z_mus,
+        #    'labels': label,
+        #    'log_px': log_px,
+        #    'log_pz': log_pz,
+        #    'log_qz': log_qz
+        #    }
         
-        with open('models/saved_models/latentSpace_train.pkl', "wb") as f:
+        #with open('models/saved_models/latentSpace_train.pkl', "wb") as f:
             #
         
-            pickle.dump(z_means, f)
+        #    pickle.dump(z_means, f)
     
     loss_tot.append(loss_epoch/train_n)
     kl_tot.append(kl_epoch/train_n)
     recon_tot.append(recon_epoch/train_n)
     
     #Begin validation loop
+    zmus = torch.zeros(testset.maxLength, test_n, config.LATENT_SIZE, device = 'cpu')
+    
     val_loss = 0
     val_kl = 0
     val_recon = 0
@@ -185,7 +187,16 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         targets = targets.to(device)
         lengths = lengths.to(device)
         
+        #Get the maximum length of the current batch
+        max_len = int(torch.max(lengths).item())
+        
         log_px, log_pz, log_qz, _, _, z_mus = model(inputs,targets,logits=None)
+        
+        #Calculate endIndex which is used to store current batch in zmus
+        endIndex = (batch_size*(i+1)) if (batch_size*(i+1)) <= test_n else test_n
+   
+        #Store current batch means in zmus
+        zmus[:max_len,(batch_size*i):endIndex,:] = z_mus.detach().cpu()
         
         loss, log_px, kl = computeLoss(log_px, log_pz, log_qz, lengths)
                 
@@ -193,19 +204,16 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         val_kl += torch.sum(kl/lengths).item()
         val_recon += torch.sum(log_px/lengths).item()
         
+    with open('models/saved_models/latentSpace_test.pkl', "wb") as f:
+        
+        ###
         z_means = {
             'Epoch': epoch,
-            'z_means': z_mus,
-            'labels': label,
-            'log_px': log_px,
-            'log_pz': log_pz,
-            'log_qz': log_qz
-            }
+            'z_means': zmus,
+
+         }
         
-        with open('models/saved_models/latentSpace_test.pkl', "wb") as f:
-            #
-        
-            pickle.dump(z_means, f)
+        pickle.dump(z_means, f)
     
     val_loss_tot.append(val_loss/test_n)
     val_kl_tot.append(val_kl/test_n)

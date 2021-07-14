@@ -211,24 +211,34 @@ def FourHotEncode(track, edges):
     
     return EncodedTrack
 
-def FindCourseBinLabel(courseList):
+def FindCourseDirection(courseList):
     ##
-    courseMean = round(np.mean(courseList, dtype=np.float64),3)
+    ##courseMean = round(np.mean(courseList, dtype=np.float64),3)
     
-    label = 0
+    directionList = []
     
-    if(courseMean < 89.75):
-        label = 1
-    elif(courseMean >= 89.75 and courseMean < 179.5):
-        label = 2
-    elif(courseMean >= 179.5 and courseMean < 269.24):
-        label = 3
-    elif(courseMean >= 269.25 and courseMean < 358):
-        label = 4
-    else:
-        label = 5
+    for cog in courseList:
         
-    return label
+        ##
+        direction = ''
+
+        ##Towards east
+        if(cog >= 45 and cog < 135):
+            direction = 'east'
+        ##Towards south
+        elif(cog >= 135 and cog < 225):
+            direction = 'south'
+        ##Towards west
+        elif(cog >= 225 and cog < 315):
+            direction = 'west'
+        ##Towards north
+        else:
+            direction = 'north'
+            
+        directionList.append(direction)
+        
+    return directionList
+
     
 def FindSpeedBinLabel(speedList):
     ##
@@ -260,7 +270,8 @@ def dumpTrackToPickle(mmsi, shiptype, track, file):
         'speed': track["speed"].to_list(),
         'course': track["course"].to_list(),
         'speedBinLabel': FindSpeedBinLabel(track["speed"].to_list()),
-        'courseBinLabel':FindCourseBinLabel(track["course"].to_list()),
+        #'courseBinLabel':FindCourseBinLabel(track["course"].to_list()),
+        'courseDirection': FindCourseDirection(track["course"].to_list()),
         'timestamp': track["timestamp"].to_list(),
         
     }

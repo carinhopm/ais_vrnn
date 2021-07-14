@@ -209,6 +209,8 @@ class AISDataset(torch.utils.data.Dataset):
         lat_edges, lon_edges, speed_edges, course_edges = self.params['binedges']
         self.datadim = len(lat_edges) + len(lon_edges) + len(speed_edges) + len(course_edges) - 4
         
+        self.maxLength = self.findMaxTrackLength()
+        
         if train_mean==None:
             self.mean = self.computeMean()
         else:
@@ -236,11 +238,10 @@ class AISDataset(torch.utils.data.Dataset):
         
         encodedTrack = createAISdata.FourHotEncode(tmpdf, self.params['binedges'])
         
-        
         label = np.where(convertShipTypeToName(str(track['shiptype']))==self.classnames)[0][0]
         targets = torch.tensor(encodedTrack, dtype=torch.float) #seq_len X data_dim
         inputs = targets - self.mean
-                
+
         return  torch.tensor(track['mmsi']), torch.tensor(label), torch.tensor(track['track_length'], dtype=torch.float), inputs, targets
     
     def computeMean(self):
@@ -265,6 +266,18 @@ class AISDataset(torch.utils.data.Dataset):
         print('index: ', index, '  total_updates: ', total_updates)
         
         return torch.tensor(mean, dtype=torch.float)
+    
+    def findMaxTrackLength(self):
+        
+        trackLenList = [] 
+    
+        for index in self.indicies:
+            with open(self.datapath,'rb') as file:
+                file.seek(index)
+                track = pickle.load(file)
+                trackLenList.append(track['track_length'])
+        return max(trackLenList)
+
     
     def getLabels(self):
         
