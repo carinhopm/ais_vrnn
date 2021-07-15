@@ -145,7 +145,7 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         targets = targets.to(device)
         lengths = lengths.to(device)
         
-        log_px, log_pz, log_qz, _, _, z_mus = model(inputs,targets,logits=None)
+        log_px, log_pz, log_qz, _, _, z_mus = model(inputs,targets,label,logits=None)
         
         loss, log_px, kl = computeLoss(log_px, log_pz, log_qz, lengths)
         
@@ -190,7 +190,7 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         #Get the maximum length of the current batch
         max_len = int(torch.max(lengths).item())
         
-        log_px, log_pz, log_qz, _, _, z_mus = model(inputs,targets,logits=None)
+        log_px, log_pz, log_qz, _, _, z_mus = model(inputs,targets,label,logits=None)
         
         #Calculate endIndex which is used to store current batch in zmus
         endIndex = (batch_size*(i+1)) if (batch_size*(i+1)) <= test_n else test_n

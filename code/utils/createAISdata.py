@@ -49,7 +49,14 @@ def FindMMSIs(directory, ROI, maxSpeed, timePeriod, navTypes, shiptypes):   ##Yo
             else:
                 currentStatus = dataset_utils.convertNavStatusToId(data['lastStatus']) # last known nav. status
             if currentStatus in navTypes:
-                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/config.lat_lon_multiply_factor),'lon': int(msg[2]/config.lat_lon_multiply_factor),'speed': int(msg[3]/config.SOG_multiply_factor),'course': int(msg[4]/config.COG_multiply_factor),'navstatus': currentStatus})
+                
+                ###
+                lat = round((msg[1]/config.lat_lon_multiply_factor), 6)
+                lon = round((msg[2]/config.lat_lon_multiply_factor), 6)
+                sog = round((msg[3]/config.SOG_multiply_factor), 2)
+                cog = round((msg[4]/config.COG_multiply_factor), 2)
+                
+                path_list.append({'timestamp': int(msg[0]),'lat': lat,'lon': lon,'speed': sog,'course': cog,'navstatus': currentStatus})
         df = pd.DataFrame(path_list)
         
         #Filter for all params x = x[x[:,LAT]>=LAT_MIN] ect.
@@ -102,13 +109,34 @@ def ReadAndJoinData(JSONfiles):  ##Your implementation of step 2.1
                 currentStatus = 'other'
                 if str(msg[0]) in statusHist.keys():
                     currentStatus = statusHist.get(str(msg[0])) # updates to new navigation status
-                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/lat_lon_multiply_factor),'lon': int(msg[2]/lat_lon_multiply_factor),
-                                'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]/COG_multiply_factor),
+                    
+                lat = round((msg[1]/lat_lon_multiply_factor), 6)
+                lon = round((msg[2]/lat_lon_multiply_factor), 6)
+                sog = round((msg[3]/SOG_multiply_factor), 2)
+                cog = round((msg[4]/COG_multiply_factor), 2)
+                
+                # path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/lat_lon_multiply_factor),'lon': int(msg[2]/lat_lon_multiply_factor),
+                #                 'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]/COG_multiply_factor),
+                #                 'navstatus': dataset_utils.convertNavStatusToId(currentStatus)})
+                path_list.append({'timestamp': int(msg[0]),'lat': lat ,'lon': lon,
+                                'speed': sog,'course': cog,
                                 'navstatus': dataset_utils.convertNavStatusToId(currentStatus)})
+                
             else:
-                path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/lat_lon_multiply_factor),'lon': int(msg[2]/lat_lon_multiply_factor),
-                                'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]/COG_multiply_factor),
-                                'navstatus': dataset_utils.convertNavStatusToId(data['lastStatus'])})
+                
+                # path_list.append({'timestamp': int(msg[0]),'lat': int(msg[1]/lat_lon_multiply_factor),'lon': int(msg[2]/lat_lon_multiply_factor),
+                #                 'speed': int(msg[3]/SOG_multiply_factor),'course': int(msg[4]/COG_multiply_factor),
+                #                 'navstatus': dataset_utils.convertNavStatusToId(data['lastStatus'])})
+                
+                lat = round((msg[1]/lat_lon_multiply_factor), 6)
+                lon = round((msg[2]/lat_lon_multiply_factor), 6)
+                sog = round((msg[3]/SOG_multiply_factor), 2)
+                cog = round((msg[4]/COG_multiply_factor), 2)
+                
+                path_list.append({'timestamp': int(msg[0]),'lat': lat,'lon': lon,
+                'speed': sog,'course': cog,
+                'navstatus': dataset_utils.convertNavStatusToId(data['lastStatus'])})
+                                
         df = pd.DataFrame(path_list)
         
         dataframes.append(df) #Append df to list
@@ -267,20 +295,20 @@ def FindSpeedBinLabel(speedList):
         
     return speedList1
 
-def dumpTrackToPickle(mmsi, shiptype, track, file):
+def dumpTrackToPickle(mmsi, shiptype, trackLine, file):
     
     savedTrack = {
         'mmsi': mmsi,
         'shiptype': shiptype,
-        'track_length': len(track.index),
-        'lat': track["lat"].to_list(),
-        'lon': track["lon"].to_list(),
-        'speed': track["speed"].to_list(),
-        'course': track["course"].to_list(),
-        'speedBinLabel': FindSpeedBinLabel(track["speed"].to_list()),
+        'track_length': len(trackLine.index),
+        'lat': [round(num, 6) for num in trackLine["lat"].to_list()],
+        'lon': [round(num, 6) for num in trackLine["lat"].to_list()],
+        'speed': [round(num, 2) for num in trackLine["speed"].to_list()],
+        'course': [round(num, 2) for num in trackLine["course"].to_list()],
+        'speedBinLabel': FindSpeedBinLabel(trackLine["speed"].to_list()),
         #'courseBinLabel':FindCourseBinLabel(track["course"].to_list()),
-        'courseDirection': FindCourseDirection(track["course"].to_list()),
-        'timestamp': track["timestamp"].to_list(),
+        'courseDirection': FindCourseDirection(trackLine["course"].to_list()),
+        'timestamp': trackLine["timestamp"].to_list(),
         
     }
     
