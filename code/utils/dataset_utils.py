@@ -172,10 +172,12 @@ def convertNavStatusToId(navStatus):
     return int(choices.get(navStatus.lower(), '0'))
 
 class AISDataset(torch.utils.data.Dataset):
-    def __init__(self, dataPath,fileName, train_mean = None):
+    def __init__(self, dataPath,fileName, train_mean = None):   
         #self.Infopath = infoPath
 
         self.Infopath = dataPath + fileName
+        
+        print('self.Infopath ',self.Infopath)
 
         eprint('dataPath: {}'.format(dataPath))
         eprint('fileName: {}'.format(fileName))
@@ -202,7 +204,7 @@ class AISDataset(torch.utils.data.Dataset):
         self.datapath = dataPath + self.indexFileName #'CargTank_1911_idxs.pkl'                    #  
         #                                                                      #   
         ########################################################################
-
+        print('self.datapath: ',self.datapath)
 
         self.datasetN = len(self.indicies)
         

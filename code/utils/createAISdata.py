@@ -301,15 +301,14 @@ def dumpTrackToPickle(mmsi, shiptype, trackLine, file):
         'mmsi': mmsi,
         'shiptype': shiptype,
         'track_length': len(trackLine.index),
-        'lat': [round(num, 6) for num in trackLine["lat"].to_list()],
-        'lon': [round(num, 6) for num in trackLine["lat"].to_list()],
+        'lat': [round(num, 2) for num in trackLine["lat"].to_list()],
+        'lon': [round(num, 2) for num in trackLine["lat"].to_list()],
         'speed': [round(num, 2) for num in trackLine["speed"].to_list()],
         'course': [round(num, 2) for num in trackLine["course"].to_list()],
         'speedBinLabel': FindSpeedBinLabel(trackLine["speed"].to_list()),
         #'courseBinLabel':FindCourseBinLabel(track["course"].to_list()),
         'courseDirection': FindCourseDirection(trackLine["course"].to_list()),
         'timestamp': trackLine["timestamp"].to_list(),
-        
     }
     
     index = file.tell()

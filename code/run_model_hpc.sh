@@ -5,7 +5,7 @@
 ### -- set the job Name --
 #BSUB -J CargTank_1911
 ### -- ask for number of cores (default: 2) --
-#BSUB -n 2
+#BSUB -n 4
 ### -- specify that the cores should be in the same host --
 #BSUB -R "span[hosts=1]"
 ### -- Select the resources: 2 gpu in exclusive process mode --
@@ -13,9 +13,9 @@
 ### -- set walltime limit: hh:mm --  maximum 24 hours for GPU-queues right now
 #BSUB -W 24:00
 # request 32GB of system-memory per core
-#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "rusage[mem=8GB]"
 ### -- specify that we want the job to get killed if it exceeds 8GB per core/slot --
-#BSUB -M 32GB
+#BSUB -M 8GB
 ### -- set the email address --
 # please uncomment the following line and put in your e-mail address,
 # if you want to receive e-mail notifications on a non-default address

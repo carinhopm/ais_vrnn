@@ -79,10 +79,10 @@ class PadSequence:
 
 # different lengths (use max/min for dimensions)
 trainset = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank.pkl")
-train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
+train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers = 1, collate_fn=PadSequence())
 
 testset = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank.pkl", train_mean = trainset.mean)
-test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers = 0, collate_fn=PadSequence())
+test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers = 1, collate_fn=PadSequence())
 
 train_n = len(trainset)
 test_n = len(testset)
@@ -178,6 +178,8 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
     #Begin validation loop
     zmus = torch.zeros(testset.maxLength, test_n, config.LATENT_SIZE, device = 'cpu')
     
+    fullLogits = torch.zeros(testset.maxLength, test_n, testset.datadim, device = 'cpu')
+    
     val_loss = 0
     val_kl = 0
     val_recon = 0
@@ -187,16 +189,22 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         targets = targets.to(device)
         lengths = lengths.to(device)
         
+        batch_size, seq_len, datadim = inputs.shape
+        
+        #logits = torch.zeros(seq_len, len(label), trainset.datadim , device = 'cpu')
+        
         #Get the maximum length of the current batch
         max_len = int(torch.max(lengths).item())
         
-        log_px, log_pz, log_qz, _, _, z_mus = model(inputs,targets,label,logits=None)
+        log_px, log_pz, log_qz, logits, _, z_mus = model(inputs,targets,label,logits=None)
         
         #Calculate endIndex which is used to store current batch in zmus
         endIndex = (batch_size*(i+1)) if (batch_size*(i+1)) <= test_n else test_n
    
         #Store current batch means in zmus
         zmus[:max_len,(batch_size*i):endIndex,:] = z_mus.detach().cpu()
+        
+        fullLogits[:max_len,(batch_size*i):endIndex,:] = logits.detach().cpu()
         
         loss, log_px, kl = computeLoss(log_px, log_pz, log_qz, lengths)
                 
@@ -210,6 +218,7 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         z_means = {
             'Epoch': epoch,
             'z_means': zmus,
+            'Logits' : fullLogits
 
          }
         

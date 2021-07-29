@@ -26,8 +26,8 @@ class config(object):
     LON_MAX_PUBLIC = 0
     SOG_MAX_PUBLIC = 15.5 #????
     
-    LAT_RES = 0.1 #10
-    LON_RES = 0.1 #10
+    LAT_RES = 0.01 #10 #0.01
+    LON_RES = 0.01 #10
     SOG_RES = 0.5
     COG_RES = 5
     

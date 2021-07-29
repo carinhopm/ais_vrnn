@@ -120,6 +120,8 @@ class VRNN(nn.Module):
         ## Initializing z_mus to store the latent mean vectors 
         z_mus = torch.zeros(seq_len, len(labels), self.latent_shape, device = self.device)
         
+        logits = torch.zeros(seq_len, len(labels), datadim , device = self.device)
+        
         
         #print('z_mus len {}'.format(z_mus.shape))
 
@@ -133,7 +135,7 @@ class VRNN(nn.Module):
 
             #Embed input
             x_hat = self.phi_x(x) #x_hat is batch X latent
-
+            
             #Create prior distribution
             ## Prior distribution knows everything that happenned in the past but has no 
             ## knowledge about present
@@ -154,7 +156,7 @@ class VRNN(nn.Module):
 
             #Decode z_hat
             ## px is the prob distribution that should be able to reconstruct the input.
-            ## px is the multivariate burnouilli distribution. 
+            ## px is the multivariate burnouilli distribution.
             px = self.generative(z_hat, out)
 
             #Update h from LSTM
@@ -180,7 +182,8 @@ class VRNN(nn.Module):
             log_qz.append(qz.log_prob(z).sum(dim=1)) #Sum over dimension
             
             ## qz - pz is the KL divergence
+            ##Dimension of px.logits: seqLength * BatchSize * InputShape
             if logits is not None:
                 logits[t, :, :] = px.logits
-        
+                
         return log_px, log_pz, log_qz, logits, hs, z_mus
