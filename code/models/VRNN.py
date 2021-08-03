@@ -51,18 +51,23 @@ class VRNN(nn.Module):
                                    nn.ReLU(),
                                    nn.Linear(self.latent_shape, self.latent_shape))
 
+        ## Input would be recurrentShape and output would be 2 times stochastic shape
         self.prior = nn.Sequential(nn.Linear(self.latent_shape, self.latent_shape),
                                    nn.ReLU(),
                                    nn.Linear(self.latent_shape, 2*self.latent_shape))
 
+        ##Input would be sum of stochastic and recurrent Shape
         self.encoder = nn.Sequential(nn.Linear(2*self.latent_shape, self.latent_shape),
                                      nn.ReLU(),
                                      nn.Linear(self.latent_shape, 2*self.latent_shape))
 
+        ####Input would be sum of stochastic and recurrent Shape
         self.decoder = nn.Sequential(nn.Linear(2*self.latent_shape, self.latent_shape),
                                      nn.ReLU(),
                                      nn.Linear(self.latent_shape, self.input_shape))
 
+        self.dropoutAfterRNN = nn.Dropout(0.1)
+        ##Input would be 2 times stochastic and hiddenSize should be recurrence hidden space. 
         self.rnn = nn.LSTM(input_size = 2*self.latent_shape, hidden_size = self.latent_shape)
         torch.nn.init.xavier_uniform_(self.rnn.weight_ih_l0)
         torch.nn.init.xavier_uniform_(self.rnn.weight_hh_l0)
@@ -164,6 +169,9 @@ class VRNN(nn.Module):
             rnn_input = rnn_input.unsqueeze(0) #rnn_input is 1 X batch X 2*latent
             #out, _ = self.rnn(rnn_input) #out is 1 X batch X latent
             out, (h, c) = self.rnn(rnn_input, (h, c)) #out is 1 X batch X latent
+            
+            out = self.dropoutAfterRNN(out)
+                        
             out = out.squeeze(axis=0)  #out is batch X latent
             
             hs[t,:] = out

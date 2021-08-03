@@ -13,6 +13,7 @@ import os
 
 
 from utils import createAISdata
+from Config import config
 
 def convertShipTypeToName(shipType):
     
@@ -170,6 +171,75 @@ def convertNavStatusToId(navStatus):
     }
     
     return int(choices.get(navStatus.lower(), '0'))
+
+def convertShipTypeListToName(shipTypeList):
+    
+    shipTypeLabel = []
+    #
+    for shipType in shipTypeList:
+        
+        shipTypeLabel.append(convertShipTypeToName(str(shipType)))
+        
+    return shipTypeLabel
+
+
+def getShipTypeLabels(testIndicies,datasets_idxs_path = None):
+    
+    if(datasets_idxs_path==None):
+        
+        datasets_idxs_path = config.datasets_path + config.index_fileName
+    
+    shipTypeList = []
+    for index in testIndicies:
+
+        with open(datasets_idxs_path,'rb') as file:
+
+            file.seek(index)
+            data = pickle.load(file)
+
+            shipTypeList.append(data['shiptype'])
+
+
+    return convertShipTypeListToName(shipTypeList)
+
+def getTrackLength(testIndicies,datasets_idxs_path = None):
+    
+    if(datasets_idxs_path==None):
+        
+        datasets_idxs_path = config.datasets_path + config.index_fileName
+        
+    
+    trackLen = []
+    
+    for index in testIndicies:
+
+        with open(datasets_idxs_path,'rb') as file:
+
+            file.seek(index)
+            data = pickle.load(file)
+
+            trackLen.append(data['track_length'])
+            
+    return trackLen
+
+def get_z_from_last_t(trackLenList,zmeans,test_n):
+    
+    zmeansLastT = torch.zeros(test_n, 1, config.LATENT_SIZE, device = 'cpu')
+    
+    for i in range(test_n):
+
+        seqLength = trackLenList[i] - 1
+        
+        z = zmeans[seqLength, i, :]
+
+        z = np.expand_dims(z, axis=0)
+        
+        z = torch.from_numpy(z)
+        
+        zmeansLastT[i] = z
+
+    return zmeansLastT
+
 
 class AISDataset(torch.utils.data.Dataset):
     def __init__(self, dataPath,fileName, train_mean = None):   
