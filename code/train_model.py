@@ -81,11 +81,15 @@ class PadSequence:
 trainset = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank.pkl")
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers = 1, collate_fn=PadSequence())
 
+validation_set = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank.pkl",validationSet = True)
+validation_loader = torch.utils.data.DataLoader(validation_set, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers = 1, collate_fn=PadSequence())
+
 testset = dataset_utils.AISDataset(dataPath = config.datasets_path, fileName = "CargTank.pkl", train_mean = trainset.mean)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers = 1, collate_fn=PadSequence())
 
 train_n = len(trainset)
 test_n = len(testset)
+validation_n = len(validation_set)
 num_batches = len(train_loader)
 num_epochs = 20
 
@@ -129,6 +133,11 @@ def computeLoss(log_px, log_pz, log_qz, lengths, beta=1):
 loss_tot = []
 kl_tot = []
 recon_tot = []
+
+train_val_loss_tot = []
+train_val_kl_tot = []
+train_val_recon_tot = []
+
 val_loss_tot = []
 val_kl_tot = []
 val_recon_tot = []
@@ -179,6 +188,45 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
     zmus = torch.zeros(testset.maxLength, test_n, config.LATENT_SIZE, device = 'cpu')
     
     fullLogits = torch.zeros(testset.maxLength, test_n, testset.datadim, device = 'cpu')
+    
+    #######################################
+    train_val_loss = 0
+    train_val_kl = 0
+    train_val_recon = 0
+    model.eval()
+    for i, (mmsi, label, lengths, inputs, targets) in enumerate(validation_loader):
+        inputs = inputs.to(device)
+        targets = targets.to(device)
+        lengths = lengths.to(device)
+        
+        batch_size, seq_len, datadim = inputs.shape
+        
+        #logits = torch.zeros(seq_len, len(label), trainset.datadim , device = 'cpu')
+        
+        #Get the maximum length of the current batch
+        max_len = int(torch.max(lengths).item())
+        
+        log_px, log_pz, log_qz, logits, _, z_mus = model(inputs,targets,label,logits=None)
+        
+        #Calculate endIndex which is used to store current batch in zmus
+        #endIndex = (batch_size*(i+1)) if (batch_size*(i+1)) <= test_n else test_n
+   
+        #Store current batch means in zmus
+        #zmus[:max_len,(batch_size*i):endIndex,:] = z_mus.detach().cpu()
+        
+        #fullLogits[:max_len,(batch_size*i):endIndex,:] = logits.detach().cpu()
+        
+        loss, log_px, kl = computeLoss(log_px, log_pz, log_qz, lengths)
+                
+        train_val_loss += loss.item()*len(lengths)
+        train_val_kl += torch.sum(kl/lengths).item()
+        train_val_recon += torch.sum(log_px/lengths).item()
+        
+    
+    train_val_loss_tot.append(train_val_loss/validation_n)
+    train_val_kl_tot.append(train_val_kl/validation_n)
+    train_val_recon_tot.append(train_val_recon/validation_n)
+    #######################################
     
     val_loss = 0
     val_kl = 0
@@ -241,10 +289,17 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         'loss_tot': loss_tot,
         'kl_tot': kl_tot,
         'recon_tot': recon_tot,
+        
+        'train_val_loss_tot': train_val_loss_tot,
+        'train_val_kl_tot': train_val_kl_tot,
+        'train_val_recon_tot': train_val_recon_tot,
+        
         'val_loss_tot': val_loss_tot,
         'val_kl_tot': val_kl_tot,
         'val_recon_tot': val_recon_tot
     }
+    
+    
     with open('models/saved_models/trainingCurves_' + shipFileName + '.pkl', "wb") as f:
         pickle.dump(trainingCurves, f)
     
@@ -252,22 +307,27 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         torch.save(model.state_dict(), 'models/saved_models/model_' + shipFileName + '_' + str(epoch) + '.pth')
         
 
-trainingCurves = {
-    'loss_tot': loss_tot,
-    'kl_tot': kl_tot,
-    'recon_tot': recon_tot,
-    'val_loss_tot': val_loss_tot,
-    'val_kl_tot': val_kl_tot,
-    'val_recon_tot': val_recon_tot
-}
+#trainingCurves = {
+#    'loss_tot': loss_tot,
+#    'kl_tot': kl_tot,
+#    'recon_tot': recon_tot,
+#    'val_loss_tot': val_loss_tot,
+#    'val_kl_tot': val_kl_tot,
+#    'val_recon_tot': val_recon_tot
+#}
 
 dataset_utils.eprint('loss_tot: {}'.format(loss_tot))
 dataset_utils.eprint('kl_tot: {}'.format(kl_tot))
 dataset_utils.eprint('recon_tot: {}'.format(recon_tot))
+
+dataset_utils.eprint('train_val_loss_tot: {}'.format(train_val_loss_tot))
+dataset_utils.eprint('train_val_kl_tot: {}'.format(train_val_kl_tot))
+dataset_utils.eprint('train_val_recon_tot: {}'.format(train_val_recon_tot))
+
 dataset_utils.eprint('val_loss_tot: {}'.format(val_loss_tot))
 dataset_utils.eprint('val_kl_tot: {}'.format(val_kl_tot))
 dataset_utils.eprint('val_recon_tot: {}'.format(val_recon_tot))
 
 torch.save(model.state_dict(), 'models/model_' + shipFileName + '.pth')
-with open('models/trainingCurves_' + shipFileName + '.pkl', "wb") as f:
-        pickle.dump(trainingCurves, f)
+#with open('models/trainingCurves_' + shipFileName + '.pkl', "wb") as f:
+#        pickle.dump(trainingCurves, f)

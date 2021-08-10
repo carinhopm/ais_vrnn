@@ -159,6 +159,7 @@ def ReadJSONfile(file):
 def FilterDataFrame(df, ROI, maxSpeed, timePeriod):
     lat_min, lat_max, lon_min, lon_max = ROI
     t_min, t_max = timePeriod
+
     df = df.loc[
         (df['timestamp']>=t_min) &
         (df['timestamp']<=t_max) &
@@ -168,7 +169,7 @@ def FilterDataFrame(df, ROI, maxSpeed, timePeriod):
         (df['lon']<=lon_max) &
         (df['speed']<=maxSpeed)
         ]
-    
+
     return df
 
 def FilterOutStationaryNavStatus(df):
@@ -334,11 +335,23 @@ def createAISdataset(params, datasets_path, dataset_filename):
         for mmsi in progressbar.progressbar(pd.unique(mmsis['MMSI'])): #Step 2
             tmp = mmsis.loc[mmsis['MMSI']==mmsi,:]
 
+            print('Handling mmsi: ', mmsi)
+            
+            print('ReadAndJoinData start')
             data, shipType = ReadAndJoinData(tmp['File']) #Step 2.1
+            print('ReadAndJoinData start')
+            print('ReadAndJoinData shape ', data.shape)
             data = FilterDataFrame(data, params['ROI'], params['maxspeed'], params['timeperiod']) #Step 2.2
+            print('FilterDataFrame shape ', data.shape)
+            print('FilterOutStationaryNavStatus start')
             data = FilterOutStationaryNavStatus(data) #Step 2.3
+            print('FilterOutStationaryNavStatus shape ', data.shape)
+            print('SplitIntoTracks start')
             data = SplitIntoTracks(data, 900) #Step 2.4
+            print('SplitIntoTracks shape ', data.shape)
+            print('RemoveShortTracks start')
             data = RemoveShortTracks(data, params['minTrackLength'],minUpdates) #Step 2.5
+            print('RemoveShortTracks shape ', data.shape)
 
             mmsiTracks = data.groupby('TrackNumber') #This actually carries out the splitting based on step 2.4
             for tracknum, track in mmsiTracks:         # For each track

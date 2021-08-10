@@ -67,6 +67,7 @@ class VRNN(nn.Module):
                                      nn.Linear(self.latent_shape, self.input_shape))
 
         self.dropoutAfterRNN = nn.Dropout(0.1)
+        self.dropoutBeforeDecoder = nn.Dropout(0.1)
         ##Input would be 2 times stochastic and hiddenSize should be recurrence hidden space. 
         self.rnn = nn.LSTM(input_size = 2*self.latent_shape, hidden_size = self.latent_shape)
         torch.nn.init.xavier_uniform_(self.rnn.weight_ih_l0)
@@ -98,7 +99,11 @@ class VRNN(nn.Module):
 
     ## This should return a guassion instead if we are using continous input. 
     def generative(self, z_enc, h):
-        px_logits = self.decoder(torch.cat([z_enc, h], dim=1))
+        
+        inputToDecoder = torch.cat([z_enc, h], dim=1)
+        #inputToDecoder = self.dropoutBeforeDecoder(inputToDecoder)
+        px_logits = self.decoder(inputToDecoder)
+                 
         px_logits = px_logits + self.generative_bias
         return Bernoulli(logits=px_logits)
 

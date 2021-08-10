@@ -7,6 +7,7 @@ import datetime
 import math
 import torch
 import sys
+import random
 
 import subprocess as sp
 import os
@@ -242,7 +243,7 @@ def get_z_from_last_t(trackLenList,zmeans,test_n):
 
 
 class AISDataset(torch.utils.data.Dataset):
-    def __init__(self, dataPath,fileName, train_mean = None):   
+    def __init__(self, dataPath,fileName, train_mean = None, validationSet = False):   
         #self.Infopath = infoPath
 
         self.Infopath = dataPath + fileName
@@ -256,12 +257,22 @@ class AISDataset(torch.utils.data.Dataset):
 
         with open(self.Infopath, "rb") as f:
             self.params = pickle.load(f)
-        
+                    
         if train_mean==None:
             self.indicies = self.params['trainIndicies']
         else:
             self.indicies = self.params['testIndicies']
+            
         
+        if(validationSet):
+            
+            ###
+            trainsetLength = len(self.indicies)
+            
+            validationSize = math.ceil(trainsetLength/5)
+            
+            self.indicies = random.sample(self.indicies, validationSize)
+            
         #self.datapath = self.params['dataFileName']
         
         self.indexFileName = self.params['dataFileName']
