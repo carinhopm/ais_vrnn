@@ -154,7 +154,7 @@ for epoch in range(1, num_epochs+1): #num_epochs+1
         targets = targets.to(device)
         lengths = lengths.to(device)
         
-        log_px, log_pz, log_qz, _, _, z_mus = model(inputs,targets,label,logits=None)
+        log_px, log_pz, log_qz, _, _, z_mus = model(inputs,targets,label,logits=None,isTraining=True)
         
         loss, log_px, kl = computeLoss(log_px, log_pz, log_qz, lengths)
         

@@ -98,16 +98,19 @@ class VRNN(nn.Module):
         return ReparameterizedDiagonalGaussian(mu, sigma)
 
     ## This should return a guassion instead if we are using continous input. 
-    def generative(self, z_enc, h):
+    def generative(self, z_enc, h,isTraining):
         
         inputToDecoder = torch.cat([z_enc, h], dim=1)
-        #inputToDecoder = self.dropoutBeforeDecoder(inputToDecoder)
+        
+        if(isTraining):
+            inputToDecoder = self.dropoutBeforeDecoder(inputToDecoder)
+            
         px_logits = self.decoder(inputToDecoder)
                  
         px_logits = px_logits + self.generative_bias
         return Bernoulli(logits=px_logits)
 
-    def forward(self, inputs, targets, labels, logits=None):
+    def forward(self, inputs, targets, labels, logits=None, isTraining=False):
     #def forward(self, inputs, targets, logits=None):
         
         batch_size, seq_len, datadim = inputs.shape
@@ -167,7 +170,7 @@ class VRNN(nn.Module):
             #Decode z_hat
             ## px is the prob distribution that should be able to reconstruct the input.
             ## px is the multivariate burnouilli distribution.
-            px = self.generative(z_hat, out)
+            px = self.generative(z_hat, out,isTraining)
 
             #Update h from LSTM
             rnn_input = torch.cat([x_hat, z_hat], dim=1)
@@ -175,8 +178,10 @@ class VRNN(nn.Module):
             #out, _ = self.rnn(rnn_input) #out is 1 X batch X latent
             out, (h, c) = self.rnn(rnn_input, (h, c)) #out is 1 X batch X latent
             
-            out = self.dropoutAfterRNN(out)
-                        
+            if(isTraining):
+                
+                out = self.dropoutAfterRNN(out)
+
             out = out.squeeze(axis=0)  #out is batch X latent
             
             hs[t,:] = out
